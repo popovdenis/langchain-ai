@@ -1,14 +1,25 @@
-from services.student_motivation_service import StudentMotivationService
 import argparse
-import json
+from agents.student_sql_agent import StudentSQLAgent
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyse student motivation.")
-    parser.add_argument("--email", required=True, help="Student email")
-    parser.add_argument("--week-from", type=int, required=True, help="Start week")
-    parser.add_argument("--week-to", type=int, required=True, help="End week")
+def main():
+    parser = argparse.ArgumentParser(description="Analyse student performance based on email and week range")
+    parser.add_argument("--email", required=True, help="Student email address")
+    parser.add_argument("--week-from", type=int, required=True, help="Start of the week range")
+    parser.add_argument("--week-to", type=int, required=True, help="End of the week range")
+    parser.add_argument("--debug", action="store_true", help="Enable verbose debug output")
     args = parser.parse_args()
 
-    service = StudentMotivationService()
-    result = service.calculate_motivation(args.email, args.week_from, args.week_to)
-    print(json.dumps(result, indent=2))
+    agent = StudentSQLAgent(debug=args.debug)
+    result = agent.run_analysis(args.email, args.week_from, args.week_to)
+
+    if isinstance(result, dict) and "output" in result:
+        print("\n" + "=" * 60)
+        print("Student Motivation Analysis")
+        print("=" * 60)
+        print(result["output"])
+        print("=" * 60 + "\n")
+    else:
+        print(result)
+
+if __name__ == "__main__":
+    main()
