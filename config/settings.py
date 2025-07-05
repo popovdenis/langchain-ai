@@ -8,6 +8,7 @@ load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 class Settings:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_API_MODEL = os.getenv("OPENAI_API_MODEL")
 
     POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))

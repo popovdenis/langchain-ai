@@ -1,52 +1,69 @@
+from __future__ import annotations
+
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
+from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.utilities import SQLDatabase
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 from config.settings import Settings
 
 
 class StudentSQLAgent:
-    def __init__(self, model_name="gpt-4", temperature=0.0, current_week=None):
+    def __init__(self, debug: bool = False):
+        self.debug = debug
         self.db = SQLDatabase.from_uri(Settings.postgres_uri())
         self.llm = ChatOpenAI(
-            model=model_name,
-            temperature=temperature,
-            openai_api_key=Settings.OPENAI_API_KEY
+            temperature=0,
+            model=Settings.OPENAI_API_MODEL,
+            api_key=Settings.OPENAI_API_KEY
         )
-        self.current_week = current_week
-
-        self.prompt = PromptTemplate.from_template(
-            """
-            Assume current week is {week_now}.
-            Given an input question, create a syntactically correct PostgreSQL query to run.
-            Use the following table:
-            student_metrics(student_id, week, attendance, homework_submitted, homework_on_time, homework_score, test_score, student_talk_percent, teacher_talk_percent, silence_percent)
-
-            Question: {question}
-            SQLQuery:
-            """
+        self.agent = create_sql_agent(
+            llm=self.llm,
+            toolkit=SQLDatabaseToolkit(db=self.db, llm=self.llm),
+            verbose=debug
         )
 
-    def run_query(self, natural_language_prompt: str) -> str:
-        chain: Runnable = self.prompt | self.llm
+    def run_analysis(self, student_email: str, week_from: int, week_to: int) -> str:
+        prompt = self._build_prompt(student_email, week_from, week_to)
 
-        sql_query = chain.invoke({
-            "question": natural_language_prompt,
-            "week_now": self.current_week
-        }).content
+        if self.debug:
+            print("Prompt sent to GPT:\n" + prompt)
+            print("-" * 80)
 
-        print("\nRaw prompt to GPT:")
-        print(self.prompt.format(
-            question=natural_language_prompt,
-            week_now=self.current_week
-        ))
+        result = self.agent.invoke(prompt)
 
-        print("\nGPT Response:")
-        print(sql_query)
+        if self.debug:
+            print("\nFinal result from GPT:\n" + result)
+            print("-" * 80)
 
-        try:
-            result = self.db.run(sql_query)
-        except Exception as e:
-            return f"Error while running SQL: {e}\nGenerated SQL:\n{sql_query}"
+        return result
 
-        return f"Generated SQL:\n{sql_query}\n\nResult:\n{result}"
+    def _build_prompt(self, email: str, week_from: int, week_to: int) -> str:
+        return f"""
+You are an educational data analyst AI.
+
+Given the student email '{email}' and the week range {week_from} to {week_to}, do the following:
+1. Look up the user ID by email from the 'users' table.
+2. Select all records for this user from 'student_metrics' where week is between {week_from} and {week_to}.
+3. For each metric:
+   - homework_submitted (binary)
+   - homework_on_time (binary)
+   - homework_score (0–9)
+   - attendance (0–1)
+   - student_participation (0–1)
+   - teacher_participation (0–1)
+   - silence (0–1)
+   - test_score (0–9)
+
+Calculate the average values and round them reasonably.
+
+Then, based on a scoring system:
+- green zone: total score > 75
+- yellow zone: 46–75
+- red zone: ≤ 45
+
+Return:
+- summary table of averages per metric
+- total score
+- motivation zone
+- a motivational message in English
+"""
