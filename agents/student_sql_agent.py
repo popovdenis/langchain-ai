@@ -32,7 +32,10 @@ class StudentSQLAgent:
         result = self.agent.invoke(prompt)
 
         if self.debug:
-            print("\nFinal result from GPT:\n" + result)
+            if isinstance(result, dict) and "output" in result:
+                print("\nFinal result from GPT:\n" + result["output"])
+            else:
+                print("\nUnexpected result format:\n", result)
             print("-" * 80)
 
         return result
@@ -64,6 +67,6 @@ Then, based on a scoring system:
 Return:
 - summary table of averages per metric
 - total score
-- motivation zone
+- motivation zone value in percent
 - a motivational message in English
 """

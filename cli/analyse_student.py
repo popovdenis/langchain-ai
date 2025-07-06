@@ -6,7 +6,7 @@ def main():
     parser.add_argument("--email", required=True, help="Student email address")
     parser.add_argument("--week-from", type=int, required=True, help="Start of the week range")
     parser.add_argument("--week-to", type=int, required=True, help="End of the week range")
-    parser.add_argument("--debug", action="store_true", help="Enable verbose debug output")
+    parser.add_argument("--debug", type=bool, help="Enable verbose debug output")
     args = parser.parse_args()
 
     agent = StudentSQLAgent(debug=args.debug)
