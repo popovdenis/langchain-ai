@@ -49,7 +49,25 @@
 
     <div id="output">
         <h2>Results:</h2>
-        <pre>{{ output }}</pre>
+        {% if metrics_table %}
+            <h3>Summary Table of Averages:</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in metrics_table %}
+                        <tr>
+                            <td>{{ row.metric }}</td>
+                            <td>{{ row.average }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
     </div>
 
     <script>
