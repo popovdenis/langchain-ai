@@ -21,9 +21,6 @@ def get_student_emails():
         return []
 
 def extract_metrics_table(output: str) -> list[dict]:
-    """
-    Извлекает строки таблицы метрик из output и возвращает список словарей
-    """
     metrics = []
     table_match = re.search(r"\| *Metric.*?\|.*?\|([\s\S]+?)\n\n", output)
     if not table_match:

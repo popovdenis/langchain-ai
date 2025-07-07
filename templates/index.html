@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Student Motivation Analysis</h1>
+<form method="post">
+    <label for="action">Action:</label>
+    <select name="action" id="action" required>
+        <option value="analyse_student">Analyse by Email</option>
+        <option value="most_motivated">Most Motivated</option>
+    </select>
+
+    <label for="email">Student Email:</label>
+    <select name="email" id="email">
+        {% for email in emails %}
+            <option value="{{ email }}">{{ email }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="week_from">Week From:</label>
+    <input type="date" id="week_from" name="week_from" required>
+
+    <label for="week_to">Week To:</label>
+    <input type="date" id="week_to" name="week_to" required>
+
+    <div id="num_students_container" style="display: none;">
+        <label for="num_students">Number of Students:</label>
+        <input type="number" id="num_students" name="num_students" min="1" placeholder="e.g. 5">
+    </div>
+
+    <br><br>
+    <button type="submit">Run Analysis</button>
+</form>
+
+<hr>
+
+<div id="output">
+    <h2>Results:</h2>
+
+    {% if metrics_table %}
+        <h3>Summary Table of Averages:</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Average</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in metrics_table %}
+                    <tr>
+                        <td>{{ row.metric }}</td>
+                        <td>{{ row.average }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if input_prompt %}
+        <h3>Input Prompt</h3>
+        <pre>{{ input_prompt }}</pre>
+    {% endif %}
+
+    {% if output_text %}
+        <h3>AI Output</h3>
+        <div>{{ output_text | replace("\n", "<br>") | safe }}</div>
+    {% endif %}
+</div>
+
+<script>
+    const actionSelect = document.getElementById("action");
+    const emailField = document.getElementById("email");
+    const numStudentsContainer = document.getElementById("num_students_container");
+
+    function toggleFields() {
+        const selected = actionSelect.value;
+        if (selected === "most_motivated") {
+            emailField.disabled = true;
+            numStudentsContainer.style.display = "block";
+        } else {
+            emailField.disabled = false;
+            numStudentsContainer.style.display = "none";
+        }
+    }
+
+    actionSelect.addEventListener("change", toggleFields);
+    window.addEventListener("DOMContentLoaded", toggleFields);
+</script>
+{% endblock %}
