@@ -20,14 +20,14 @@ def generate_fake_data(num_students=100, weeks=52):
         user_id = cursor.fetchone()[0]
 
         for week in range(1, weeks + 1):
-            attendance = round(random.uniform(0.5, 1.0), 2)
-            homework_submitted = random.choice([True, False])
-            homework_on_time = homework_submitted and random.choice([True, False])
-            homework_score = round(random.uniform(4.0, 9.0), 1) if homework_submitted else 0.0
-            test_score = round(random.uniform(4.0, 9.0), 1)
+            attendance = round(random.uniform(0.1, 1.0), 2)
+            homework_submitted = round(random.uniform(0.1, 1.0), 2)
+            homework_on_time = round(random.uniform(0.1, 1.0), 2)
+            homework_score = round(random.uniform(0.1, 1.0), 2) if homework_submitted else 0.0
+            test_score = round(random.uniform(0.1, 1.0), 2)
             student_talk = round(random.uniform(0.1, 0.6), 2)
             teacher_talk = round(random.uniform(0.3, 0.8), 2)
-            silence = round(1.0 - (student_talk + teacher_talk), 2)
+            silence = round(random.uniform(0.03, 0.3), 2)
 
             cursor.execute("""
                 INSERT INTO student_metrics (

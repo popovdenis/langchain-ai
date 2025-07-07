@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Motivation Analysis</h1>
+    <form method="POST">
+        <label for="action">Action:</label>
+        <select name="action" id="action" required>
+            <option value="analyse_student">Analyse by Email</option>
+            <option value="most_motivated">Most Motivated</option>
+        </select>
+
+        <label for="email">Student Email:</label>
+        <select name="email" id="email">
+            {% for email in emails %}
+                <option value="{{ email }}">{{ email }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="week_from">Week From:</label>
+        <input type="date" id="week_from" name="week_from" required>
+
+        <label for="week_to">Week To:</label>
+        <input type="date" id="week_to" name="week_to" required>
+
+        <div id="num_students_container" style="display: none;">
+            <label for="num_students">Number of Students:</label>
+            <input type="number" id="num_students" name="num_students" min="1" placeholder="e.g. 5">
+        </div>
+
+        <br><br>
+        <button type="submit">Run Analysis</button>
+    </form>
+
+    <hr>
+
+    <div id="output">
+        <h2>Results:</h2>
+        <pre>{{ output }}</pre>
+    </div>
+
+    <script>
+        const actionSelect = document.getElementById("action");
+        const emailField = document.getElementById("email");
+        const numStudentsContainer = document.getElementById("num_students_container");
+
+        function toggleFields() {
+            const selected = actionSelect.value;
+            if (selected === "most_motivated") {
+                emailField.disabled = true;
+                numStudentsContainer.style.display = "block";
+            } else {
+                emailField.disabled = false;
+                numStudentsContainer.style.display = "none";
+            }
+        }
+
+        actionSelect.addEventListener("change", toggleFields);
+        window.addEventListener("DOMContentLoaded", toggleFields);
+    </script>
+</body>
+</html>
