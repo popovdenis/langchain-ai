@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Analysis</title>
+    <title>Student Motivation Analysis</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +11,18 @@
         label {
             display: block;
             margin-top: 1rem;
+        }
+        #output {
+            margin-top: 2rem;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
         }
     </style>
 </head>
@@ -41,11 +53,9 @@
             <input type="number" id="num_students" name="num_students" min="1" placeholder="e.g. 5">
         </div>
 
-        <br><br>
+        <br>
         <button type="submit">Run Analysis</button>
     </form>
-
-    <hr>
 
     <div id="output">
         <h2>Results:</h2>
