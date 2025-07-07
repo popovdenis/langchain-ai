@@ -29,12 +29,12 @@ class MostMotivatedStudentAgent:
 
         - homework_submitted (0–1)
         - homework_on_time (0–1)
-        - homework_score (0–9)
+        - homework_score (0–1)
         - attendance (0–1)
         - student_participation (0–1)
         - teacher_participation (0–1)
         - silence (0–1, reversed meaning)
-        - test_score (0–9)
+        - test_score (0–1)
 
         For each user:
         1. Select records between weeks {week_from} and {week_to}

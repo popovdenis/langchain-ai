@@ -45,28 +45,39 @@ class StudentSQLAgent:
 You are an educational data analyst AI.
 
 Given the student email '{email}' and the week range {week_from} to {week_to}, do the following:
+
 1. Look up the user ID by email from the 'users' table.
 2. Select all records for this user from 'student_metrics' where week is between {week_from} and {week_to}.
-3. For each metric:
-   - homework_submitted (binary)
-   - homework_on_time (binary)
-   - homework_score (0–9)
-   - attendance (0–1)
-   - student_participation (0–1)
-   - teacher_participation (0–1)
-   - silence (0–1)
-   - test_score (0–9)
 
-Calculate the average values and round them reasonably.
+Each record contains the following metrics (all values are percentages in decimal format):
 
-Then, based on a scoring system:
-- green zone: total score > 75
-- yellow zone: 46–75
-- red zone: ≤ 45
+- homework_submitted (0–1)
+- homework_on_time (0–1)
+- homework_score (0–1)
+- attendance (0–1)
+- student_participation (0–1)
+- teacher_participation (0–1)
+- silence (0–1) — represents pauses during the lesson, not inverse of speech
+- test_score (0–1)
 
-Return:
-- summary table of averages per metric
-- total score
-- motivation zone value in percent
-- a motivational message in English
+Steps:
+
+1. For each metric, calculate the average across the selected weeks.
+2. Multiply each average by its predefined weight (stored in the system).
+3. Exclude the 'silence' metric from subtotal and motivation zone calculation.
+4. Sum the remaining weighted averages into a subtotal (between 0 and 1).
+5. Multiply subtotal by 100 to get total score (0–100).
+6. Identify the weakest metric (lowest average), excluding 'silence'.
+7. Determine the motivation zone:
+   - Red: ≤ 45
+   - Yellow: 46–75
+   - Green: > 75
+
+Return the following:
+
+- Summary table of averages per metric (including silence)
+- Subtotal (decimal)
+- Total score (percentage)
+- Motivation zone (Red / Yellow / Green)
+- Motivational message in English that includes advice on improving the weakest metric (excluding silence)
 """

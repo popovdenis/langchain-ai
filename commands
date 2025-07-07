@@ -2,5 +2,5 @@ PYTHONPATH=. python cli/run_query.py --query "Find students who missed homework 
 PYTHONPATH=. python cli/run_query.py --query "Find students with attendance = 0.4"
 PYTHONPATH=. python cli/run_query.py --query "Find students who missed homework last week" --week 27
 PYTHONPATH=. python generate_fake_data.py
-PYTHONPATH=. python cli/analyse_student.py --email scottandrew@example.com --debug 1 --week-from 1 --week-to 27
+PYTHONPATH=. python cli/analyse_student.py --email dylanharris@example.com --debug 1 --week-from 1 --week-to 27
 PYTHONPATH=. flask --app flask_app/app.py run
