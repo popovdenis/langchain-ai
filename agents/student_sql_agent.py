@@ -19,6 +19,7 @@ class StudentSQLAgent:
         self.agent = create_sql_agent(
             llm=self.llm,
             toolkit=SQLDatabaseToolkit(db=self.db, llm=self.llm),
+            handle_parsing_errors=True,
             verbose=debug
         )
 
@@ -73,7 +74,7 @@ Steps:
    - Yellow: 46–75
    - Green: > 75
 
-Return the following:
+Return ONLY valid JSON:
 
 - Summary table of averages per metric (including silence)
 - Subtotal (decimal)

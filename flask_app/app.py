@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from agents.student_sql_agent import StudentSQLAgent
 from agents.most_motivated_student_agent import MostMotivatedStudentAgent
-from db.postgree_connector import get_postgres_connection
 from datetime import datetime
 import math
 import re
@@ -22,7 +21,6 @@ def get_paginated_students(page: int, per_page: int = 10):
         cursor.execute("SELECT email FROM users ORDER BY email LIMIT %s OFFSET %s", (per_page, offset))
         rows = cursor.fetchall()
 
-        # Преобразуем в словари
         students = [{"email": row[0]} for row in rows]
 
         cursor.close()
@@ -32,7 +30,6 @@ def get_paginated_students(page: int, per_page: int = 10):
         print(f"Error fetching students: {e}")
         return [], 0
 
-# Парсинг таблицы метрик из вывода агента
 def extract_metrics_table(output: str) -> list[dict]:
     metrics = []
     table_match = re.search(r"\| *Metric.*?\|.*?\|([\s\S]+?)\n\n", output)
@@ -46,12 +43,10 @@ def extract_metrics_table(output: str) -> list[dict]:
             metrics.append({"metric": parts[0], "average": parts[1]})
     return metrics
 
-# Главная страница
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-# Таблица студентов с пагинацией
 @app.route("/students", methods=["GET"])
 def students_table():
     try:
@@ -62,7 +57,6 @@ def students_table():
     total_pages = math.ceil(total / 10)
     return render_template("partials/table.html", students=students, page=page, total_pages=total_pages)
 
-# Анализ мотивации
 @app.route("/analysis", methods=["POST"])
 def student_analysis():
     try:
@@ -81,7 +75,7 @@ def student_analysis():
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent(debug=True)
-            result = agent.run_analysis(week_from, week_to, num_students)
+            result = agent.run_analysis(week_from, week_to)
         else:
             return jsonify({"error": "Unknown action"}), 400
 
