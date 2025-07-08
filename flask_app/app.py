@@ -1,24 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify
 from agents.student_sql_agent import StudentSQLAgent
 from agents.most_motivated_student_agent import MostMotivatedStudentAgent
 from db.postgree_connector import get_postgres_connection
 from datetime import datetime
+import math
 import re
-import uuid
 
 app = Flask(__name__)
-app.secret_key = str(uuid.uuid4())
 
-def get_student_emails():
+
+def get_paginated_students(page: int, per_page: int = 10):
     try:
         db = get_postgres_connection()
-        raw_results = db._execute("SELECT email FROM users ORDER BY email")
-        emails = [row["email"] for row in raw_results]
-        print("Loaded emails:", emails)
-        return emails
+        offset = (page - 1) * per_page
+        count_result = db._execute("SELECT COUNT(*) as total FROM users")
+        total = count_result[0]["total"]
+        rows = db._execute(
+            "SELECT email FROM users ORDER BY email LIMIT %s OFFSET %s", (per_page, offset)
+        )
+        return rows, total
     except Exception as e:
-        print(f"Error fetching student emails: {e}")
-        return []
+        print(f"Error fetching students: {e}")
+        return [], 0
+
 
 def extract_metrics_table(output: str) -> list[dict]:
     metrics = []
@@ -33,54 +37,56 @@ def extract_metrics_table(output: str) -> list[dict]:
             metrics.append({"metric": parts[0], "average": parts[1]})
     return metrics
 
-@app.route("/", methods=["GET", "POST"])
+
+@app.route("/", methods=["GET"])
 def index():
-    emails = get_student_emails()
+    return render_template("index.html")
 
-    parsed_input = ""
-    parsed_output = ""
-    metrics_table = []
-    raw_output = ""
-    selected_action = ""
-    selected_email = ""
-    week_from_date = ""
-    week_to_date = ""
 
-    if request.method == "POST":
-        selected_action = request.form.get("action")
-        week_from_date = request.form.get("week_from")
-        week_to_date = request.form.get("week_to")
-        selected_email = request.form.get("email", "").strip()
+@app.route("/students", methods=["GET"])
+def students_table():
+    page = int(request.args.get("page", 1))
+    students, total = get_paginated_students(page)
+    total_pages = math.ceil(total / 10)
+    return render_template("partials/table.html", students=students, page=page, total_pages=total_pages)
 
-        week_from = datetime.strptime(week_from_date, "%Y-%m-%d").isocalendar()[1]
-        week_to = datetime.strptime(week_to_date, "%Y-%m-%d").isocalendar()[1]
 
-        if selected_action == "analyse_student" and selected_email:
+@app.route("/analysis", methods=["POST"])
+def student_analysis():
+    data = request.json
+    action = data.get("action")
+    week_from_str = data.get("week_from")
+    week_to_str = data.get("week_to")
+    email = data.get("email")
+    num_students = int(data.get("num_students", 1))
+
+    try:
+        week_from = datetime.strptime(week_from_str, "%Y-%m-%d").isocalendar().week
+        week_to = datetime.strptime(week_to_str, "%Y-%m-%d").isocalendar().week
+    except Exception as e:
+        return jsonify({"error": f"Invalid date format: {e}"}), 400
+
+    try:
+        if action == "analyse_student":
             agent = StudentSQLAgent(debug=True)
-            result = agent.run_analysis(selected_email, week_from, week_to)
-        elif selected_action == "most_motivated":
+            result = agent.run_analysis(email, week_from, week_to)
+        elif action == "most_motivated":
             agent = MostMotivatedStudentAgent(debug=True)
             result = agent.run_analysis(week_from, week_to)
         else:
-            result = "Unknown action or missing email."
+            return jsonify({"error": "Unknown action"}), 400
 
-        if isinstance(result, dict):
-            parsed_input = result.get("input", "").replace("\n", "<br>")
-            parsed_output = result.get("output", "").replace("\n", "<br>")
-            metrics_table = extract_metrics_table(result.get("output", ""))
-            raw_output = result
-        else:
-            parsed_output = result
+        parsed_input = result.get("input", "").replace("\n", "<br>") if isinstance(result, dict) else ""
+        parsed_output = result.get("output", "").replace("\n", "<br>") if isinstance(result, dict) else result
+        metrics_table = extract_metrics_table(parsed_output)
 
-    return render_template(
-        "index.html",
-        emails=emails,
-        selected_email=selected_email,
-        selected_action=selected_action,
-        week_from_date=week_from_date,
-        week_to_date=week_to_date,
-        parsed_input=parsed_input,
-        parsed_output=parsed_output,
-        raw_output=raw_output,
-        metrics_table=metrics_table,
-    )
+        html = render_template(
+            "partials/analysis.html",
+            parsed_input=parsed_input,
+            parsed_output=parsed_output,
+            metrics_table=metrics_table,
+            student_email=email
+        )
+        return jsonify({"html": html})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Motivation Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; }
+        label { display: block; margin-top: 1rem; }
+        #output, #students-table { margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>Student Motivation Analysis</h1>
+
+    {% include 'partials/form.html' %}
+
+    <div id="students-table">
+        {% include 'partials/students_table.html' %}
+    </div>
+
+    <div id="output">
+        {% include 'partials/result_block.html' %}
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
