@@ -5,25 +5,34 @@ from db.postgree_connector import get_postgres_connection
 from datetime import datetime
 import math
 import re
+import psycopg2
+from config.settings import Settings
 
 app = Flask(__name__)
 
-
 def get_paginated_students(page: int, per_page: int = 10):
+    offset = (page - 1) * per_page
     try:
-        db = get_postgres_connection()
-        offset = (page - 1) * per_page
-        count_result = db._execute("SELECT COUNT(*) as total FROM users")
-        total = count_result[0]["total"]
-        rows = db._execute(
-            "SELECT email FROM users ORDER BY email LIMIT %s OFFSET %s", (per_page, offset)
-        )
-        return rows, total
+        conn = psycopg2.connect(Settings.postgres_dsn())
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM users")
+        total = cursor.fetchone()[0]
+
+        cursor.execute("SELECT email FROM users ORDER BY email LIMIT %s OFFSET %s", (per_page, offset))
+        rows = cursor.fetchall()
+
+        # Преобразуем в словари
+        students = [{"email": row[0]} for row in rows]
+
+        cursor.close()
+        conn.close()
+        return students, total
     except Exception as e:
         print(f"Error fetching students: {e}")
         return [], 0
 
-
+# Парсинг таблицы метрик из вывода агента
 def extract_metrics_table(output: str) -> list[dict]:
     metrics = []
     table_match = re.search(r"\| *Metric.*?\|.*?\|([\s\S]+?)\n\n", output)
@@ -37,42 +46,42 @@ def extract_metrics_table(output: str) -> list[dict]:
             metrics.append({"metric": parts[0], "average": parts[1]})
     return metrics
 
-
+# Главная страница
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-
+# Таблица студентов с пагинацией
 @app.route("/students", methods=["GET"])
 def students_table():
-    page = int(request.args.get("page", 1))
+    try:
+        page = int(request.args.get("page", 1))
+    except ValueError:
+        page = 1
     students, total = get_paginated_students(page)
     total_pages = math.ceil(total / 10)
     return render_template("partials/table.html", students=students, page=page, total_pages=total_pages)
 
-
+# Анализ мотивации
 @app.route("/analysis", methods=["POST"])
 def student_analysis():
-    data = request.json
-    action = data.get("action")
-    week_from_str = data.get("week_from")
-    week_to_str = data.get("week_to")
-    email = data.get("email")
-    num_students = int(data.get("num_students", 1))
-
     try:
+        data = request.get_json()
+        action = data.get("action")
+        week_from_str = data.get("week_from")
+        week_to_str = data.get("week_to")
+        email = data.get("email")
+        num_students = int(data.get("num_students", 1))
+
         week_from = datetime.strptime(week_from_str, "%Y-%m-%d").isocalendar().week
         week_to = datetime.strptime(week_to_str, "%Y-%m-%d").isocalendar().week
-    except Exception as e:
-        return jsonify({"error": f"Invalid date format: {e}"}), 400
 
-    try:
         if action == "analyse_student":
             agent = StudentSQLAgent(debug=True)
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent(debug=True)
-            result = agent.run_analysis(week_from, week_to)
+            result = agent.run_analysis(week_from, week_to, num_students)
         else:
             return jsonify({"error": "Unknown action"}), 400
 
@@ -88,5 +97,6 @@ def student_analysis():
             student_email=email
         )
         return jsonify({"html": html})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
