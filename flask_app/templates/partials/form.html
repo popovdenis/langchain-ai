@@ -1,25 +1,38 @@
 <form id="analysis-form">
-    <label for="action">Action:</label>
-    <select id="action" name="action" required>
-        <option value="analyse_student">Analyse by Email</option>
-        <option value="most_motivated">Most Motivated</option>
-    </select>
-
-    <label>Target:
-      <input type="radio" name="target" value="student" checked> Student Email
-      <input type="radio" name="target" value="all"> All Students
-    </label>
-
-    <div id="email-field">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email">
+    <div class="form-group mb-3">
+        <label for="action">Select Action:</label>
+        <select name="action" id="action" class="form-select">
+            <option value="analyse_student">Analyse by Email</option>
+            <option value="most_motivated">Most Motivated</option>
+        </select>
     </div>
 
-    <label for="week_from">Week From:</label>
-    <input type="date" id="week_from" name="week_from" required>
+    <div class="form-group mb-3">
+        <label>Student Type:</label><br>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="student_type" value="email" checked>
+            <label class="form-check-label">Student Email</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="student_type" value="all">
+            <label class="form-check-label">All Students</label>
+        </div>
+    </div>
 
-    <label for="week_to">Week To:</label>
-    <input type="date" id="week_to" name="week_to" required>
+    <div class="form-group mb-3" id="student-email-block">
+        <label for="student-email-input">Student Email:</label>
+        <input type="email" id="student-email-input" name="email" class="form-control">
+    </div>
 
-    <button type="submit">Run Analysis</button>
+    <div class="form-group mb-3">
+        <label for="week_from">Week From:</label>
+        <input type="date" id="week_from" name="week_from" class="form-control">
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="week_to">Week To:</label>
+        <input type="date" id="week_to" name="week_to" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Run Analysis</button>
 </form>

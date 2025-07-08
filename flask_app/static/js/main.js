@@ -23,16 +23,12 @@ document.addEventListener("DOMContentLoaded", function () {
         radio.addEventListener('change', toggleStudentType);
     });
 
-    async function fetchStudents(page = 1) {
+    window.fetchStudents = async function (page = 1) {
         studentTableBlock.innerHTML = '<p>Loading students...</p>';
-        try {
-            const response = await fetch(`/students?page=${page}`);
-            const html = await response.text();
-            studentTableBlock.innerHTML = html;
-        } catch (err) {
-            studentTableBlock.innerHTML = '<p>Error loading students</p>';
-        }
-    }
+        const response = await fetch(`/students?page=${page}`);
+        const html = await response.text();
+        studentTableBlock.innerHTML = html;
+    };
 
     window.showAnalysis = async function (email) {
         analysisBlock.innerHTML = '<p>Loading analysis...</p>';
@@ -42,51 +38,55 @@ document.addEventListener("DOMContentLoaded", function () {
         const action = document.getElementById('action').value;
 
         const payload = {
-            action: action,
-            email: email,
+            action,
+            email,
             week_from: weekFrom,
-            week_to: weekTo
+            week_to: weekTo,
+            num_students: 1
         };
 
-        try {
-            const response = await fetch("/analysis", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
+        const response = await fetch("/analysis", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.html) {
             analysisBlock.innerHTML = data.html;
-        } catch (err) {
-            analysisBlock.innerHTML = "<p>Error loading analysis</p>";
+        } else {
+            analysisBlock.innerHTML = `<p class="text-danger">${data.error || 'Unknown error'}</p>`;
         }
     };
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        outputBlock.innerHTML = '<p>Loading...</p>';
+        outputBlock.innerHTML = '<p>Loading analysis...</p>';
 
-        const email = document.getElementById('email').value;
-        const weekFrom = document.getElementById('week_from').value;
-        const weekTo = document.getElementById('week_to').value;
-        const action = document.getElementById('action').value;
-
+        const formData = new FormData(form);
         const payload = {
-            action: action,
-            email: email,
-            week_from: weekFrom,
-            week_to: weekTo
+            action: formData.get('action'),
+            email: formData.get('email'),
+            week_from: formData.get('week_from'),
+            week_to: formData.get('week_to'),
+            num_students: 1
         };
 
-        try {
-            const response = await fetch("/analysis", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
+        const response = await fetch("/analysis", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.html) {
             outputBlock.innerHTML = data.html;
-        } catch (err) {
-            outputBlock.innerHTML = "<p>Error loading analysis</p>";
+        } else {
+            outputBlock.innerHTML = `<p class="text-danger">${data.error || 'Unknown error'}</p>`;
         }
     });
 

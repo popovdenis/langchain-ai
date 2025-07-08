@@ -6,3 +6,5 @@ langchain-openai~=0.3.27
 python-dotenv~=1.1.1
 faker~=37.4.0
 flask~=3.1.1
+sqlalchemy~=2.0.41
+uvicorn~=0.35.0

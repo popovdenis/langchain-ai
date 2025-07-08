@@ -1,103 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Student Motivation Analysis</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 2rem;
-        }
-        label {
-            display: block;
-            margin-top: 1rem;
-        }
-        #output {
-            margin-top: 2rem;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 1rem;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 0.5rem;
-        }
-    </style>
-</head>
-<body>
-    <h1>Student Motivation Analysis</h1>
-    <form method="POST">
-        <label for="action">Action:</label>
-        <select name="action" id="action" required>
-            <option value="analyse_student">Analyse by Email</option>
-            <option value="most_motivated">Most Motivated</option>
-        </select>
+{% extends "base.html" %}
 
-        <label for="email">Student Email:</label>
-        <select name="email" id="email">
-            {% for email in emails %}
-                <option value="{{ email }}">{{ email }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="week_from">Week From:</label>
-        <input type="date" id="week_from" name="week_from" required>
-
-        <label for="week_to">Week To:</label>
-        <input type="date" id="week_to" name="week_to" required>
-
-        <div id="num_students_container" style="display: none;">
-            <label for="num_students">Number of Students:</label>
-            <input type="number" id="num_students" name="num_students" min="1" placeholder="e.g. 5">
-        </div>
-
-        <br>
-        <button type="submit">Run Analysis</button>
+{% block content %}
+    <form id="analysis-form" class="mb-4">
+        {% include "partials/form.html" %}
+        <button type="submit" class="btn btn-primary mt-3">Show Analysis</button>
     </form>
 
-    <div id="output">
-        <h2>Results:</h2>
-        {% if metrics_table %}
-            <h3>Summary Table of Averages:</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Average</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in metrics_table %}
-                        <tr>
-                            <td>{{ row.metric }}</td>
-                            <td>{{ row.average }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    </div>
+    <!-- Students for All -->
+    <div id="student-table" class="mb-4"></div>
 
-    <script>
-        const actionSelect = document.getElementById("action");
-        const emailField = document.getElementById("email");
-        const numStudentsContainer = document.getElementById("num_students_container");
+    <!-- Response for a single student by email -->
+    <div id="output" class="mb-4"></div>
 
-        function toggleFields() {
-            const selected = actionSelect.value;
-            if (selected === "most_motivated") {
-                emailField.disabled = true;
-                numStudentsContainer.style.display = "block";
-            } else {
-                emailField.disabled = false;
-                numStudentsContainer.style.display = "none";
-            }
-        }
-
-        actionSelect.addEventListener("change", toggleFields);
-        window.addEventListener("DOMContentLoaded", toggleFields);
-    </script>
-</body>
-</html>
+    <!-- Response for the table -->
+    <div id="student-analysis"></div>
+{% endblock %}

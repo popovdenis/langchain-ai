@@ -1,4 +1,4 @@
-<table class="table">
+<table class="table table-bordered mt-4">
     <thead>
         <tr>
             <th>Email</th>
@@ -7,26 +7,24 @@
     </thead>
     <tbody>
         {% for student in students %}
-            <tr>
-                <td>{{ student.email }}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="showAnalysis('{{ student.email }}')">
-                        Show Analysis
-                    </button>
-                </td>
-            </tr>
+        <tr>
+            <td>{{ student.email }}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="showAnalysis('{{ student.email }}')">
+                    Show Analysis
+                </button>
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
 
 {% if total_pages > 1 %}
-<nav aria-label="Student pagination">
+<nav>
     <ul class="pagination">
-        {% for page_num in range(1, total_pages + 1) %}
-            <li class="page-item {% if page_num == current_page %}active{% endif %}">
-                <a class="page-link" href="#" onclick="fetchStudents({{ page_num }}); return false;">
-                    {{ page_num }}
-                </a>
+        {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="#" onclick="fetchStudents({{ p }}); return false;">{{ p }}</a>
             </li>
         {% endfor %}
     </ul>
