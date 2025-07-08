@@ -71,13 +71,15 @@ def student_analysis():
         week_to = datetime.strptime(week_to_str, "%Y-%m-%d").isocalendar().week
 
         if action == "analyse_student":
-            agent = StudentSQLAgent(debug=True)
+            agent = StudentSQLAgent(debug=False)
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent(debug=True)
             result = agent.run_analysis(week_from, week_to)
         else:
             return jsonify({"error": "Unknown action"}), 400
+
+        print("Result: ", result)
 
         parsed_input = result.get("input", "").replace("\n", "<br>") if isinstance(result, dict) else ""
         parsed_output = result.get("output", "").replace("\n", "<br>") if isinstance(result, dict) else result

@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const studentTypeRadios = document.querySelectorAll('input[name="student_type"]');
-    const emailInputBlock = document.getElementById('student-email-input');
+    const emailInputBlock = document.getElementById('student-email-block');
     const studentTableBlock = document.getElementById('student-table');
     const analysisBlock = document.getElementById('student-analysis');
     const outputBlock = document.getElementById('output');
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     window.fetchStudents = async function (page = 1) {
+        analysisBlock.innerHTML = '';
         studentTableBlock.innerHTML = '<p>Loading students...</p>';
         const response = await fetch(`/students?page=${page}`);
         const html = await response.text();
@@ -31,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     window.showAnalysis = async function (email) {
+        studentTableBlock.innerHTML = '';
         analysisBlock.innerHTML = '<p>Loading analysis...</p>';
 
         const weekFrom = document.getElementById('week_from').value;
