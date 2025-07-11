@@ -5,24 +5,59 @@ from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 from langchain_openai import ChatOpenAI
 from config.settings import Settings
-from langchain_core.messages import AIMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.exceptions import OutputParserException
+from sqlalchemy import create_engine
+from langchain_core.messages import AIMessage
 
 class StudentSQLAgent:
     def __init__(self, debug: bool = False):
         self.debug = debug
-        self.db = SQLDatabase.from_uri(Settings.postgres_uri())
+
+        custom_table_info = {
+            "users": """
+                     CREATE TABLE users
+                     (
+                         id    SERIAL PRIMARY KEY,
+                         email VARCHAR(255) UNIQUE
+                     );
+                     """,
+            "student_metrics": """
+                               CREATE TABLE student_metrics
+                               (
+                                   id                    SERIAL PRIMARY KEY,
+                                   user_id               INTEGER REFERENCES users (id),
+                                   week                  INTEGER          NOT NULL,
+                                   homework_score        DOUBLE PRECISION NOT NULL,
+                                   attendance            DOUBLE PRECISION NOT NULL,
+                                   student_participation DOUBLE PRECISION NOT NULL,
+                                   teacher_participation DOUBLE PRECISION NOT NULL,
+                                   silence               DOUBLE PRECISION NOT NULL,
+                                   test_score            DOUBLE PRECISION NOT NULL,
+                                   homework_submitted    DOUBLE PRECISION NOT NULL,
+                                   homework_on_time      DOUBLE PRECISION NOT NULL
+                               );
+                               """
+        }
+
+        self.db = SQLDatabase(
+            engine=create_engine(Settings.postgres_uri()),
+            include_tables=["users", "student_metrics"],
+            sample_rows_in_table_info=0,
+            custom_table_info=custom_table_info,
+            lazy_table_reflection=True
+        )
         self.llm = ChatOpenAI(
             temperature=0,
             model=Settings.OPENAI_API_MODEL,
-            api_key=Settings.OPENAI_API_KEY
+            api_key=Settings.OPENAI_API_KEY,
+            streaming=False
         )
         self.agent = create_sql_agent(
             llm=self.llm,
             toolkit=SQLDatabaseToolkit(db=self.db, llm=self.llm),
             handle_parsing_errors=True,
-            verbose=debug
+            verbose=self.debug
         )
 
     def run_analysis(self, student_email: str, week_from: int, week_to: int) -> list[dict]:
@@ -78,11 +113,14 @@ class StudentSQLAgent:
         result_data.append({"label": "Total Score", "value": f"{round(parsed['total_score'], 2)}%"})
         result_data.append({"label": "Motivation Zone", "value": parsed["motivation_zone"]})
         result_data.append({"label": "Motivational Message", "value": parsed["motivation_message"]})
+        # result_data.append({"label": "Parsed result", "value": self.get_debug_log()})
 
         return result_data
 
     def _build_prompt(self, email: str, week_from: int, week_to: int) -> str:
         return f"""
+You already know the schema. Do not call sql_db_schema tool to list tables or get table schema. Do not call sql_db_query_checker. Use only the provided data.
+
 You are an educational data analyst AI.
 
 Given the student email '{email}' and the week range {week_from} to {week_to}, do the following:
@@ -111,11 +149,11 @@ Steps:
    - Yellow: 46–75
    - Green: > 75
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with the following fields:
 
 - summary: Summary table of averages per metric
 - subtotal: Subtotal (decimal)
 - total_score: Total score (percentage)
 - motivation_zone: Motivation zone (Red / Yellow / Green)
-- motivation_message: Motivational message in English that includes advice on improving the weakest metric
+- motivation_message: Motivational message in English that includes advice on improving the weakest metric. Define the metric label.
 """
