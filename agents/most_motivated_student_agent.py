@@ -32,8 +32,6 @@ class MostMotivatedStudentAgent:
         - homework_score (0–1)
         - attendance (0–1)
         - student_participation (0–1)
-        - teacher_participation (0–1)
-        - silence (0–1, reversed meaning)
         - test_score (0–1)
 
         For each user:

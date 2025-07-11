@@ -62,13 +62,10 @@ def student_analysis():
     try:
         data = request.get_json()
         action = data.get("action")
-        week_from_str = data.get("week_from")
-        week_to_str = data.get("week_to")
+        week_from = data.get("week_from")
+        week_to = data.get("week_to")
         email = data.get("email")
         num_students = int(data.get("num_students", 1))
-
-        week_from = datetime.strptime(week_from_str, "%Y-%m-%d").isocalendar().week
-        week_to = datetime.strptime(week_to_str, "%Y-%m-%d").isocalendar().week
 
         if action == "analyse_student":
             agent = StudentSQLAgent(debug=False)
@@ -79,17 +76,9 @@ def student_analysis():
         else:
             return jsonify({"error": "Unknown action"}), 400
 
-        print("Result: ", result)
-
-        parsed_input = result.get("input", "").replace("\n", "<br>") if isinstance(result, dict) else ""
-        parsed_output = result.get("output", "").replace("\n", "<br>") if isinstance(result, dict) else result
-        metrics_table = extract_metrics_table(parsed_output)
-
         html = render_template(
             "partials/analysis.html",
-            parsed_input=parsed_input,
-            parsed_output=parsed_output,
-            metrics_table=metrics_table,
+            metrics_table=result,
             student_email=email
         )
         return jsonify({"html": html})

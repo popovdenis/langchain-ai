@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const analysisBlock = document.getElementById('student-analysis');
     const outputBlock = document.getElementById('output');
     const form = document.getElementById('analysis-form');
+    const runAnalysis = document.getElementById('run_analysis');
 
     function toggleStudentType() {
         const selected = document.querySelector('input[name="student_type"]:checked').value;
@@ -13,8 +14,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (selected === 'email') {
             emailInputBlock.style.display = 'block';
             studentTableBlock.innerHTML = '';
+            runAnalysis.style.display = 'block';
         } else {
             emailInputBlock.style.display = 'none';
+            runAnalysis.style.display = 'none';
             fetchStudents(1);
         }
     }
@@ -32,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     window.showAnalysis = async function (email) {
-        studentTableBlock.innerHTML = '';
+        // studentTableBlock.innerHTML = '';
         analysisBlock.innerHTML = '<p>Loading analysis...</p>';
 
         const weekFrom = document.getElementById('week_from').value;

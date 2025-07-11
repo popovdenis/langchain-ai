@@ -12,14 +12,9 @@ def main():
     agent = StudentSQLAgent(debug=args.debug)
     result = agent.run_analysis(args.email, args.week_from, args.week_to)
 
-    if isinstance(result, dict) and "output" in result:
-        print("\n" + "=" * 60)
-        print("Student Motivation Analysis")
-        print("=" * 60)
-        print(result["output"])
-        print("=" * 60 + "\n")
-    else:
-        print(result)
+    print("\n" + "=" * 60)
+    print(result)
+    print("=" * 60 + "\n")
 
 if __name__ == "__main__":
     main()

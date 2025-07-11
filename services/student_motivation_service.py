@@ -34,8 +34,6 @@ class StudentMotivationService:
                 homework_score,
                 attendance,
                 student_participation,
-                teacher_participation,
-                silence,
                 test_score
             FROM student_metrics
             WHERE user_id = %s AND week BETWEEN %s AND %s
@@ -53,8 +51,8 @@ class StudentMotivationService:
             "homework_score": round(statistics.mean(metrics[2]), 4),
             "attendance": round(statistics.mean(metrics[3]), 4),
             "student_participation": round(statistics.mean(metrics[4]), 4),
-            "teacher_participation": round(statistics.mean(metrics[5]), 4),
-            "silence": round(statistics.mean(metrics[6]), 4),
+            # "teacher_participation": round(statistics.mean(metrics[5]), 4),
+            # "silence": round(statistics.mean(metrics[6]), 4),
             "test_score": round(statistics.mean(metrics[7]), 4),
         }
 
@@ -64,7 +62,7 @@ class StudentMotivationService:
 
         # Find the lowest
         lowest_metric = min(
-            {k: v for k, v in averages.items() if k != "silence"}, key=averages.get
+            {k: v for k, v in averages.items()}, key=averages.get
         )
 
         return {

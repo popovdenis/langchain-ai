@@ -2,36 +2,36 @@
 <h3>Analysis for {{ student_email }}</h3>
 {% endif %}
 
-{% if parsed_input %}
-<div class="mb-3">
-    <h5>Prompt Sent:</h5>
-    <div class="border p-2 bg-light">{{ parsed_input | safe }}</div>
-</div>
-{% endif %}
+<!--{% if parsed_input %}-->
+<!--<div class="mb-3">-->
+<!--    <h5>Prompt Sent:</h5>-->
+<!--    <div class="border p-2 bg-light">{{ parsed_input | safe }}</div>-->
+<!--</div>-->
+<!--{% endif %}-->
 
 {% if metrics_table %}
 <h4>Summary Table of Averages:</h4>
-<table class="table table-sm table-striped">
+<table class="table table-sm table-striped align-middle">
     <thead>
         <tr>
-            <th>Metric</th>
-            <th>Average</th>
+            <th class="col-6">Metric</th>
+            <th class="col-6">Value</th>
         </tr>
     </thead>
     <tbody>
         {% for row in metrics_table %}
         <tr>
-            <td>{{ row.metric }}</td>
-            <td>{{ row.average }}</td>
+            <td class="fw-semibold">{{ row.label }}</td>
+            <td>{{ row.value }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endif %}
 
-{% if parsed_output %}
-<div class="mt-4">
-    <h5>Agent Output:</h5>
-    <div class="border p-2 bg-light">{{ parsed_output | safe }}</div>
-</div>
-{% endif %}
+<!--{% if parsed_output %}-->
+<!--<div class="mt-4">-->
+<!--    <h5>Agent Output:</h5>-->
+<!--    <div class="border p-2 bg-light">{{ parsed_output | safe }}</div>-->
+<!--</div>-->
+<!--{% endif %}-->
