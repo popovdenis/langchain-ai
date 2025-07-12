@@ -67,7 +67,11 @@ class StudentSQLAgent:
             print("Prompt sent to GPT:\n" + prompt)
             print("-" * 80)
 
-        result = self.agent.invoke(prompt)
+        try:
+            result = self.agent.invoke(prompt)
+        except Exception as e:
+            print("Error while invoke:", e)
+            raise ValueError("Invalid agent invoke")
 
         if self.debug:
             if isinstance(result, dict) and "output" in result:
@@ -83,6 +87,11 @@ class StudentSQLAgent:
             raise ValueError("Invalid result: missing 'output'")
 
         raw_output = result["output"]
+
+        if self.debug:
+            print("Output from GPT:\n" + raw_output)
+            print("-" * 80)
+
         if not isinstance(raw_output, str):
             raise ValueError("Invalid output: must be a string")
 
@@ -119,7 +128,7 @@ class StudentSQLAgent:
 
     def _build_prompt(self, email: str, week_from: int, week_to: int) -> str:
         return f"""
-You already know the schema. Do not call sql_db_schema tool to list tables or get table schema. Do not call sql_db_query_checker. Use only the provided data.
+Do not call sql_db_query_checker.
 
 You are an educational data analyst AI.
 
@@ -155,5 +164,5 @@ Return ONLY valid JSON with the following fields:
 - subtotal: Subtotal (decimal)
 - total_score: Total score (percentage)
 - motivation_zone: Motivation zone (Red / Yellow / Green)
-- motivation_message: Motivational message in English that includes advice on improving the weakest metric. Define the metric label.
+- motivation_message: Motivational message in English that helps the student improve their weakest metric.The message should be practical, optimistic, and mention the weak metric clearly.
 """
