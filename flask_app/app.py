@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from agents.student_sql_agent import StudentSQLAgent
 # from agents.most_motivated_student_agent import MostMotivatedStudentAgent
-from agents.student_motivation_agent import
+from agents.student_motivation_agent import StudentMotivationAgent
 import math
 import re
 import psycopg2
@@ -71,8 +71,8 @@ def student_analysis():
             agent = StudentSQLAgent(debug=False)
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
-            agent = MostMotivatedStudentAgent(debug=True)
-            result = agent.run_analysis(week_from, week_to)
+            agent = StudentMotivationAgent()
+            result = agent.run_analysis(email, week_from, week_to)
         else:
             return jsonify({"error": "Unknown action"}), 400
 
