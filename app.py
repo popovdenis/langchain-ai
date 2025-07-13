@@ -69,7 +69,7 @@ def student_analysis():
         num_students = int(data.get("num_students", 1))
 
         if action == "analyse_student":
-            agent = StudentSQLAgent(debug=True)
+            agent = StudentSQLAgent()
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent()
