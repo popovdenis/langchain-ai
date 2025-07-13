@@ -10,6 +10,10 @@ from langchain_core.exceptions import OutputParserException
 from sqlalchemy import create_engine
 from langchain_core.messages import AIMessage
 
+# from langchain.cache import InMemoryCache
+# from langchain.globals import set_llm_cache
+# set_llm_cache(InMemoryCache())  # disable cache
+
 class StudentSQLAgent:
     def __init__(self, debug: bool = False):
         self.debug = debug
@@ -43,21 +47,23 @@ class StudentSQLAgent:
         self.db = SQLDatabase(
             engine=create_engine(Settings.postgres_uri()),
             include_tables=["users", "student_metrics"],
-            sample_rows_in_table_info=0,
+            sample_rows_in_table_info=1,
             custom_table_info=custom_table_info,
-            lazy_table_reflection=True
+            lazy_table_reflection=True,
         )
         self.llm = ChatOpenAI(
             temperature=0,
             model=Settings.OPENAI_API_MODEL,
             api_key=Settings.OPENAI_API_KEY,
-            streaming=False
+            streaming=False,
+            cache=True,
         )
         self.agent = create_sql_agent(
             llm=self.llm,
             toolkit=SQLDatabaseToolkit(db=self.db, llm=self.llm),
-            handle_parsing_errors=True,
-            verbose=self.debug
+            handle_parsing_errors=False,
+            verbose=self.debug,
+            cache=True,
         )
 
     def run_analysis(self, student_email: str, week_from: int, week_to: int) -> list[dict]:
@@ -128,8 +134,6 @@ class StudentSQLAgent:
 
     def _build_prompt(self, email: str, week_from: int, week_to: int) -> str:
         return f"""
-Do not call sql_db_query_checker.
-
 You are an educational data analyst AI.
 
 Given the student email '{email}' and the week range {week_from} to {week_to}, do the following:
@@ -164,5 +168,5 @@ Return ONLY valid JSON with the following fields:
 - subtotal: Subtotal (decimal)
 - total_score: Total score (percentage)
 - motivation_zone: Motivation zone (Red / Yellow / Green)
-- motivation_message: Motivational message in English that helps the student improve their weakest metric.The message should be practical, optimistic, and mention the weak metric clearly.
+- motivation_message: Motivational message in English that helps the student improve their weakest metric.The message should be practical, optimistic, and contain at least 15 tokens.
 """
