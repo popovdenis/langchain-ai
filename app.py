@@ -8,6 +8,7 @@ import psycopg2
 from config.settings import Settings
 
 app = Flask(__name__)
+application = app
 
 def get_paginated_students(page: int, per_page: int = 10):
     offset = (page - 1) * per_page
