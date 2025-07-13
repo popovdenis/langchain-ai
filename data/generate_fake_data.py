@@ -1,12 +1,12 @@
 import random
-import psycopg2
+import mysql.connector
 from faker import Faker
 from config.settings import Settings
 
 fake = Faker()
 
 def generate_fake_data(num_students=100, weeks=52):
-    conn = psycopg2.connect(Settings.postgres_dsn())
+    conn = mysql.connector.connect(**Settings.mysql_dsn())
     cursor = conn.cursor()
 
     # Clear tables

@@ -4,7 +4,7 @@ from agents.most_motivated_student_agent import MostMotivatedStudentAgent
 # from agents.student_motivation_agent import StudentMotivationAgent
 import math
 import re
-import psycopg2
+import mysql.connector
 from config.settings import Settings
 
 app = Flask(__name__)
@@ -13,7 +13,7 @@ application = app
 def get_paginated_students(page: int, per_page: int = 10):
     offset = (page - 1) * per_page
     try:
-        conn = psycopg2.connect(Settings.postgres_dsn())
+        conn = mysql.connector.connect(**Settings.mysql_dsn())
         cursor = conn.cursor()
 
         cursor.execute("SELECT COUNT(*) FROM users")

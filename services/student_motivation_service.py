@@ -7,7 +7,7 @@ from config.settings import Settings
 
 class StudentMotivationService:
     def __init__(self):
-        self.conn = psycopg2.connect(Settings.postgres_dsn())
+        self.conn = psycopg2.connect(Settings.mysql_dsn())
         self.cursor = self.conn.cursor()
         self.weights = {
             "homework_submitted": Decimal(Settings.WEIGHT_HOMEWORK_SUBMITTED),

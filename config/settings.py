@@ -5,32 +5,29 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
-
 class Settings:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_API_MODEL = os.getenv("OPENAI_API_MODEL")
 
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-    POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+    MYSQL_PORT = int(os.getenv("MYSQL_PORT", 3306))
+    MYSQL_DB = os.getenv("MYSQL_DB")
+    MYSQL_USER = os.getenv("MYSQL_USER")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 
     @classmethod
-    def postgres_uri(cls):
-        """For SQLAlchemy"""
+    def mysql_uri(cls):
         return (
-            f"postgresql+psycopg2://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}"
-            f"@{cls.POSTGRES_HOST}:{cls.POSTGRES_PORT}/{cls.POSTGRES_DB}"
+            f"mysql+mysqlconnector://{cls.MYSQL_USER}:{cls.MYSQL_PASSWORD}"
+            f"@{cls.MYSQL_HOST}:{cls.MYSQL_PORT}/{cls.MYSQL_DB}"
         )
 
     @classmethod
-    def postgres_dsn(cls):
-        """For psycopg2"""
-        return (
-            f"dbname={cls.POSTGRES_DB} "
-            f"user={cls.POSTGRES_USER} "
-            f"password={cls.POSTGRES_PASSWORD} "
-            f"host={cls.POSTGRES_HOST} "
-            f"port={cls.POSTGRES_PORT}"
-        )
+    def mysql_dsn(cls):
+        return {
+            "host": cls.MYSQL_HOST,
+            "port": cls.MYSQL_PORT,
+            "user": cls.MYSQL_USER,
+            "password": cls.MYSQL_PASSWORD,
+            "database": cls.MYSQL_DB,
+        }

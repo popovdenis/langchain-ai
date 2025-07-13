@@ -45,7 +45,7 @@ class StudentSQLAgent:
         }
 
         self.db = SQLDatabase(
-            engine=create_engine(Settings.postgres_uri()),
+            engine=create_engine(Settings.mysql_uri()),
             include_tables=["users", "student_metrics"],
             sample_rows_in_table_info=1,
             custom_table_info=custom_table_info,
