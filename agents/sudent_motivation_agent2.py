@@ -1,6 +1,8 @@
 import os
 import ast
 import time
+import logging
+from datetime import datetime
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.utilities import SQLDatabase
@@ -15,15 +17,39 @@ class StudentMotivationAgent2:
         self.llm = ChatOpenAI()
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())
         self.metric_weights = {
-            "homework_submitted": float(os.getenv("WEIGHT_HOMEWORK_SUBMITTED", 0.1)),
-            "homework_on_time": float(os.getenv("WEIGHT_HOMEWORK_ON_TIME", 0.1)),
-            "homework_score": float(os.getenv("WEIGHT_HOMEWORK_SCORE", 0.2)),
-            "attendance": float(os.getenv("WEIGHT_ATTENDANCE", 0.2)),
-            "student_participation": float(os.getenv("WEIGHT_STUDENT_PARTICIPATION", 0.1)),
-            "teacher_participation": float(os.getenv("WEIGHT_TEACHER_PARTICIPATION", 0.1)),
-            "silence": float(os.getenv("WEIGHT_SILENCE", 0.1)),
-            "test_score": float(os.getenv("WEIGHT_TEST_SCORE", 0.1)),
+            "homework_submitted": float(getattr(Settings, "WEIGHT_HOMEWORK_SUBMITTED", 0.1)),
+            "homework_on_time": float(getattr(Settings, "WEIGHT_HOMEWORK_ON_TIME", 0.1)),
+            "homework_score": float(getattr(Settings, "WEIGHT_HOMEWORK_SCORE", 0.2)),
+            "attendance": float(getattr(Settings, "WEIGHT_ATTENDANCE", 0.2)),
+            "student_participation": float(getattr(Settings, "WEIGHT_STUDENT_PARTICIPATION", 0.1)),
+            "teacher_participation": float(getattr(Settings, "WEIGHT_TEACHER_PARTICIPATION", 0.1)),
+            "silence": float(getattr(Settings, "WEIGHT_SILENCE", 0.1)),
+            "test_score": float(getattr(Settings, "WEIGHT_TEST_SCORE", 0.1)),
         }
+
+        self._configure_logger()
+
+    def _configure_logger(self):
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        log_file = os.path.join(log_dir, f"logging_{today}.log")
+
+        # Проверка прав
+        if os.path.exists(log_file) and not os.access(log_file, os.W_OK):
+            raise PermissionError(f"No write permission to existing log file: {log_file}")
+        if not os.access(log_dir, os.W_OK):
+            raise PermissionError(f"No write permission to directory: {log_dir}")
+
+        logging.basicConfig(
+            filename=log_file,
+            filemode='a',
+            level=logging.DEBUG,
+            format="%(asctime)s - %(levelname)s - %(message)s"
+        )
+        if self.debug:
+            logging.getLogger().addHandler(logging.StreamHandler())
 
     def build_sql_prompt(self, email: str, week_from: int, week_to: int) -> str:
         return f"""
@@ -35,63 +61,63 @@ Only return a valid SQL query.
 """.strip()
 
     def get_schema(self, _=None):
-        return self.db.get_table_info()
+        try:
+            return self.db.get_table_info()
+        except Exception as e:
+            logging.error(f"Failed to fetch schema: {e}")
+            raise
 
     def run_analysis(self, email: str, week_from: int, week_to: int) -> list[dict]:
         start_time = time.time()
-        # Step 1: Generate SQL
-        sql_prompt = ChatPromptTemplate.from_template("""
+        try:
+            # Step 1: Generate SQL
+            sql_prompt = ChatPromptTemplate.from_template("""
 Based on the table schema below, write an SQL query that would answer the user's question:
 {schema}
 
 Question: {question}
 SQL Query:
 """)
-        sql_chain = (
-            RunnablePassthrough.assign(schema=self.get_schema)
-            | sql_prompt
-            | self.llm.bind(stop="\SQL Result:")
-            | StrOutputParser()
-        )
+            sql_chain = (
+                RunnablePassthrough.assign(schema=self.get_schema)
+                | sql_prompt
+                | self.llm.bind(stop="\SQL Result:")
+                | StrOutputParser()
+            )
 
-        question = self.build_sql_prompt(email, week_from, week_to)
-        sql_query = sql_chain.invoke({"question": question})
+            question = self.build_sql_prompt(email, week_from, week_to)
+            sql_query = sql_chain.invoke({"question": question})
+            logging.info(f"Generated SQL:\n{sql_query}")
 
-        if self.debug:
-            print("Generated SQL:\n", sql_query)
+            # Step 2: Execute SQL
+            try:
+                result_str = self.db.run(sql_query)
+            except Exception as e:
+                logging.error(f"Database query failed: {e}")
+                raise
 
-        # Step 2: Run SQL
-        try:
-            result_str = self.db.run(sql_query)
+            logging.info(f"Raw SQL result:\n{result_str}")
+
+            # Step 3: Parse result
+            try:
+                parsed = ast.literal_eval(result_str)[0]
+            except Exception as e:
+                logging.error(f"Failed to parse SQL result: {e}")
+                raise ValueError(f"Result parsing failed: {e}")
+
+            # Step 4: Analyse
+            metrics_res = self._analyse_metrics(parsed)
+
+            elapsed_time = time.time() - start_time
+            logging.info(f"Full analysis completed in {elapsed_time:.2f} seconds")
+            return metrics_res
+
         except Exception as e:
-            raise ValueError(f"Database error: {e}")
-
-        if self.debug:
-            print("Raw SQL result:\n", result_str)
-
-        # Step 3: Parse & analyse
-        try:
-            parsed = ast.literal_eval(result_str)[0]
-        except Exception as e:
-            raise ValueError(f"Result parsing failed: {e}")
-
-        if self.debug:
-            print("Parse result:\n", parsed)
-
-        metrics_res = self._analyse_metrics(parsed)
-
-        elapsed_time = time.time() - start_time
-        if self.debug:
-            print(f"\nFull time: {elapsed_time:.2f} seconds")
-
-        return metrics_res
+            logging.exception("Unexpected error during analysis")
+            raise
 
     def _analyse_metrics(self, parsed_result: list[float]) -> list[dict]:
         metric_order = list(self.metric_weights.keys())
-
-        if self.debug:
-            print("Metrics result:\n", parsed_result)
-            print("Metrics order:\n", metric_order)
 
         summary = []
         subtotal = 0.0
@@ -117,23 +143,24 @@ SQL Query:
             "Green"
         )
 
-        # Step 4: LLM motivational message
-        message_prompt = ChatPromptTemplate.from_template("""
+        try:
+            message_prompt = ChatPromptTemplate.from_template("""
 The student's weakest metric is: {metric}.
 
 Write a motivational message (at least 15 tokens) that helps the student improve in this area.
 Be optimistic, specific, and helpful. Only return the message text.
 """)
-        msg_chain = message_prompt | self.llm | StrOutputParser()
-        motivation_message = msg_chain.invoke({
-            "metric": min_metric.replace("_", " ")
-        })
-
-        if self.debug:
-            print("Motivation result:\n", motivation_message)
+            msg_chain = message_prompt | self.llm | StrOutputParser()
+            motivation_message = msg_chain.invoke({
+                "metric": min_metric.replace("_", " ")
+            }).strip()
+        except Exception as e:
+            logging.error(f"Failed to generate motivational message: {e}")
+            motivation_message = "Motivational message could not be generated."
 
         summary.append({"label": "Subtotal", "value": round(subtotal, 4)})
         summary.append({"label": "Total Score", "value": f"{total_score}%"})
         summary.append({"label": "Motivation Zone", "value": motivation_zone})
-        summary.append({"label": "Motivational Message", "value": motivation_message.strip()})
+        summary.append({"label": "Motivational Message", "value": motivation_message})
+
         return summary
