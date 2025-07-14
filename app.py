@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from agents.student_sql_agent import StudentSQLAgent
 from agents.most_motivated_student_agent import MostMotivatedStudentAgent
+from agents.sudent_motivation_agent2 import StudentMotivationAgent2
 # from agents.student_motivation_agent import StudentMotivationAgent
 import math
 import re
@@ -69,7 +70,8 @@ def student_analysis():
         num_students = int(data.get("num_students", 1))
 
         if action == "analyse_student":
-            agent = StudentSQLAgent()
+            # agent = StudentSQLAgent()
+            agent = StudentMotivationAgent2()
             result = agent.run_analysis(email, week_from, week_to)
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent()
