@@ -17,6 +17,7 @@ class StudentMotivationAgent2:
         self.llm = ChatOpenAI()
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())
         self.metric_weights = {
+            "id": "",
             "homework_submitted": float(getattr(Settings, "WEIGHT_HOMEWORK_SUBMITTED", 0.1)),
             "homework_on_time": float(getattr(Settings, "WEIGHT_HOMEWORK_ON_TIME", 0.1)),
             "homework_score": float(getattr(Settings, "WEIGHT_HOMEWORK_SCORE", 0.2)),
@@ -36,7 +37,7 @@ class StudentMotivationAgent2:
         today = datetime.now().strftime("%Y-%m-%d")
         log_file = os.path.join(log_dir, f"logging_{today}.log")
 
-        # Проверка прав
+        # Check rights
         if os.path.exists(log_file) and not os.access(log_file, os.W_OK):
             raise PermissionError(f"No write permission to existing log file: {log_file}")
         if not os.access(log_dir, os.W_OK):
@@ -56,7 +57,7 @@ class StudentMotivationAgent2:
 Write an SQL query that:
 1. Finds the ID of the student with email = '{email}'
 2. Selects all student_metrics where week between {week_from} and {week_to} and user_id matches.
-3. Calculates AVG for each metric (exclude id, user_id, week).
+3. Calculates AVG for each metric: homework_submitted, homework_on_time, homework_score, attendance, student_participation, teacher_participation, silence, test_score. Exclude id, week.
 Only return a valid SQL query.
 """.strip()
 
@@ -69,6 +70,7 @@ Only return a valid SQL query.
 
     def run_analysis(self, email: str, week_from: int, week_to: int) -> list[dict]:
         start_time = time.time()
+        logging.info("Start analysis")
         try:
             # Step 1: Generate SQL
             sql_prompt = ChatPromptTemplate.from_template("""
@@ -85,12 +87,17 @@ SQL Query:
                 | StrOutputParser()
             )
 
+            logging.info("Start generating SQL prompt")
             question = self.build_sql_prompt(email, week_from, week_to)
+            logging.info(f"Question:\n{question}")
+
+            logging.info("Start invoke question")
             sql_query = sql_chain.invoke({"question": question})
             logging.info(f"Generated SQL:\n{sql_query}")
 
             # Step 2: Execute SQL
             try:
+                logging.info("Start executing SQL query")
                 result_str = self.db.run(sql_query)
             except Exception as e:
                 logging.error(f"Database query failed: {e}")
@@ -100,13 +107,20 @@ SQL Query:
 
             # Step 3: Parse result
             try:
+                logging.info("Start parsing result")
                 parsed = ast.literal_eval(result_str)[0]
+                logging.info(f"Parsed result:\n{parsed}")
             except Exception as e:
                 logging.error(f"Failed to parse SQL result: {e}")
                 raise ValueError(f"Result parsing failed: {e}")
 
             # Step 4: Analyse
-            metrics_res = self._analyse_metrics(parsed)
+            try:
+                logging.info("Start analysing metrics")
+                metrics_res = self._analyse_metrics(parsed)
+            except Exception as e:
+                logging.error(f"Failed to analyse metrics: {e}")
+                raise ValueError(f"Failed to analyse metrics: {e}")
 
             elapsed_time = time.time() - start_time
             logging.info(f"Full analysis completed in {elapsed_time:.2f} seconds")
@@ -125,16 +139,18 @@ SQL Query:
         min_value = None
 
         for metric, value in zip(metric_order, parsed_result):
-            summary.append({
-                "label": metric.replace("_", " ").title(),
-                "value": round(value * 100, 2)
-            })
-            weighted = value * self.metric_weights[metric]
-            subtotal += weighted
+            if metric != "id":
+                logging.info(f"Metric: {metric}; Value: {value}")
+                summary.append({
+                    "label": metric.replace("_", " ").title(),
+                    "value": round(value * 100, 2)
+                })
+                weighted = value * self.metric_weights[metric]
+                subtotal += weighted
 
-            if min_value is None or value < min_value:
-                min_value = value
-                min_metric = metric
+                if min_value is None or value < min_value:
+                    min_value = value
+                    min_metric = metric
 
         total_score = round(subtotal * 100, 2)
         motivation_zone = (
