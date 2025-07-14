@@ -17,7 +17,6 @@ class StudentMotivationAgent2:
         self.llm = ChatOpenAI()
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())
         self.metric_weights = {
-            "id": "",
             "homework_submitted": float(getattr(Settings, "WEIGHT_HOMEWORK_SUBMITTED", 0.1)),
             "homework_on_time": float(getattr(Settings, "WEIGHT_HOMEWORK_ON_TIME", 0.1)),
             "homework_score": float(getattr(Settings, "WEIGHT_HOMEWORK_SCORE", 0.2)),
@@ -57,7 +56,8 @@ class StudentMotivationAgent2:
 Write an SQL query that:
 1. Finds the ID of the student with email = '{email}'
 2. Selects all student_metrics where week between {week_from} and {week_to} and user_id matches.
-3. Calculates AVG for each metric: homework_submitted, homework_on_time, homework_score, attendance, student_participation, teacher_participation, test_score. Exclude id, week.
+3. Calculates AVG for each of these metrics: homework_submitted, homework_on_time, homework_score, attendance, student_participation, teacher_participation, test_score.
+4. Return values of these metrics only. Exclude id, week.
 Only return a valid SQL query.
 """.strip()
 
@@ -139,18 +139,15 @@ SQL Query:
         min_value = None
 
         for metric, value in zip(metric_order, parsed_result):
-            if metric != "id":
-                logging.info(f"Metric: {metric}; Value: {value}")
-                summary.append({
-                    "label": metric.replace("_", " ").title(),
-                    "value": round(value * 100, 2)
-                })
-                weighted = value * self.metric_weights[metric]
-                subtotal += weighted
+            logging.info(f"Metric: {metric}; Value: {value}")
+            weighted = round(value * self.metric_weights[metric], 2)
+            summary.append({"label": metric.replace("_", " ").title(), "value": weighted})
+            subtotal += weighted
+            logging.info(f"weighted: {weighted}; subtotal: {subtotal}")
 
-                if min_value is None or value < min_value:
-                    min_value = value
-                    min_metric = metric
+            if min_value is None or value < min_value:
+                min_value = value
+                min_metric = metric
 
         total_score = round(subtotal * 100, 2)
         motivation_zone = (
