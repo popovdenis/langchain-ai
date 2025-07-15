@@ -10,12 +10,19 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from config.settings import Settings
+import mysql.connector
 
 class MostMotivatedStudentAgent:
     def __init__(self):
         self.llm = ChatOpenAI(
             api_key=Settings.OPENAI_API_KEY,
             model=Settings.OPENAI_API_MODEL
+        )
+        self.mydb = mysql.connector.connect(
+            host=Settings.MYSQL_HOST,
+            user=Settings.MYSQL_USER,
+            password=Settings.MYSQL_PASSWORD,
+            database=Settings.MYSQL_DB
         )
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())
         self.metric_weights = {
@@ -45,18 +52,22 @@ class MostMotivatedStudentAgent:
     def get_schema(self, _=None):
         return self.db.get_table_info()
 
-    def build_metrics_prompt(self, week_from: int, week_to: int) -> str:
+    def build_metrics_prompt(self, week_from: int, week_to: int, num_students: int = 1) -> str:
         return f"""
     From the `student_metrics` table:
     1. For each user_id, calculate average of all metrics (excluding id, user_id, week).
-    2. Identify the student with the highest overall average across all these metrics (i.e. sum of all averages divided by number of metrics).
+    2. Identify top {num_students} users with the highest overall average across all these metrics.
     3. Return:
        - user_id
-       - all avg metrics in this order:
-         homework_submitted, homework_on_time, homework_score, attendance,
-         student_participation, teacher_participation, test_score
-    One row only. SQL only.
-    WHERE week BETWEEN {week_from} AND {week_to}
+       - avg_homework_submitted
+       - avg_homework_on_time
+       - avg_homework_score
+       - avg_attendance
+       - avg_student_participation
+       - avg_teacher_participation
+       - avg_test_score
+
+    Only return SQL. Use: WHERE week BETWEEN {week_from} AND {week_to}.
     """.strip()
 
     def build_user_prompt(self, user_id: int) -> str:
@@ -65,7 +76,7 @@ From the `users` table, return email for user with id = {user_id}.
 Return a single column: email.
 """.strip()
 
-    def run_analysis(self, week_from: int, week_to: int):
+    def run_analysis(self, week_from: int, week_to: int, num_students: int):
         start_time = time.time()
         logging.info("Start: most motivated student analysis")
 
@@ -82,10 +93,10 @@ Return a single column: email.
         sql_chain = (
             RunnablePassthrough.assign(schema=self.get_schema)
             | prompt
-            | self.llm.bind(stop="\nSQL Result:")
+            | self.llm
             | StrOutputParser()
         )
-        question = self.build_metrics_prompt(week_from, week_to)
+        question = self.build_metrics_prompt(week_from, week_to, num_students)
 
         sql = sql_chain.invoke({"question": question})
         logging.info(f"SQL #1:\n{sql}")
@@ -96,58 +107,61 @@ Return a single column: email.
         if sql.endswith("```"):
             sql = sql[:-3].strip()
 
-        result = self.db.run(sql)
-        logging.info(f"SQL #1 result: {result}")
+        mycursor = self.mydb.cursor()
+        mycursor.execute(sql)
+        rows = mycursor.fetchall()
+        logging.info(f"SQL #1 result: {rows}")
+
+        summary = []
 
         # 2. Parse the result
-        try:
-            parsed = ast.literal_eval(result)[0]
-            user_id = parsed[0:]
-            metric_values = parsed[1:]
-        except Exception as e:
-            logging.error(f"Parse error in result: {e}")
-            raise ValueError("Invalid result from SQL #1")
+        for row in rows:
+            try:
+                user_id = row[0]
+                metric_values = row[:0] + row[0 + 1:]
+            except Exception as e:
+                logging.error(f"Parse error in result: {e}")
+                raise ValueError("Invalid result from SQL #1")
 
-        # 2. Step: get email by user_id
-        question2 = self.build_user_prompt(user_id)
-        sql_chain2 = (
-                RunnablePassthrough.assign(schema=self.get_schema)
-                | prompt
-                | self.llm.bind(stop="\nSQL Result:")
-                | StrOutputParser()
-        )
-        sql2 = sql_chain2.invoke({"question": question2})
-        logging.info(f"SQL #2:\n{sql2}")
+            # 2. Step: get email by user_id
+            question2 = self.build_user_prompt(user_id)
+            sql_chain2 = (
+                    RunnablePassthrough.assign(schema=self.get_schema)
+                    | prompt
+                    | self.llm.bind(stop="\nSQL Result:")
+                    | StrOutputParser()
+            )
+            sql2 = sql_chain2.invoke({"question": question2})
+            logging.info(f"SQL #2:\n{sql2}")
 
-        sql2 = sql2.strip()
-        if sql2.startswith("```sql"):
-            sql2 = sql2.replace("```sql", "").strip()
-        if sql2.endswith("```"):
-            sql2 = sql2[:-3].strip()
+            sql2 = sql2.strip()
+            if sql2.startswith("```sql"):
+                sql2 = sql2.replace("```sql", "").strip()
+            if sql2.endswith("```"):
+                sql2 = sql2[:-3].strip()
 
-        result2 = self.db.run(sql2)
-        logging.info(f"SQL #2 result: {result2}")
-        try:
-            email = ast.literal_eval(result2)[0][0]
-        except Exception as e:
-            logging.error(f"Parse error in result2: {e}")
-            raise ValueError("Could not extract email")
+            result2 = self.db.run(sql2)
+            logging.info(f"SQL #2 result: {result2}")
+            try:
+                email = ast.literal_eval(result2)[0][0]
+            except Exception as e:
+                logging.error(f"Parse error in result2: {e}")
+                raise ValueError("Could not extract email")
 
-        # Step 2: Analyse
-        try:
-            logging.info("Start analysing metrics")
-            metrics_res = self._analyse_metrics(metric_values)
-        except Exception as e:
-            logging.error(f"Failed to analyse metrics: {e}")
-            raise ValueError(f"Failed to analyse metrics: {e}")
+            # Step 2: Analyse
+            try:
+                logging.info("Start analysing metrics")
+                metrics_res = self._analyse_metrics(metric_values)
+            except Exception as e:
+                logging.error(f"Failed to analyse metrics: {e}")
+                raise ValueError(f"Failed to analyse metrics: {e}")
+
+            summary.append({"email": email, "metrics": metrics_res})
 
         elapsed_time = time.time() - start_time
         logging.info(f"Full analysis completed in {elapsed_time:.2f} seconds")
 
-        return {
-            "email": email,
-            "metrics": metrics_res,
-        }
+        return summary
 
     def _analyse_metrics(self, parsed_result: list[float]) -> list[dict]:
         metric_order = list(self.metric_weights.keys())

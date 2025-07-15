@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-from agents.student_sql_agent import StudentSQLAgent
 from agents.most_motivated_student_agent import MostMotivatedStudentAgent
 from agents.sudent_motivation_agent2 import StudentMotivationAgent2
 # from agents.student_motivation_agent import StudentMotivationAgent
@@ -80,12 +79,11 @@ def student_analysis():
             )
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent()
-            result = agent.run_analysis(week_from, week_to)
+            result = agent.run_analysis(week_from, week_to, num_students)
 
             html = render_template(
                 "partials/most_motivated.html",
-                metrics_table=result['metrics'],
-                student_email=result['email']
+                metrics_table=result
             )
         else:
             return jsonify({"error": "Unknown action"}), 400

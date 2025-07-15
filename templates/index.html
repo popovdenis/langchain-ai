@@ -2,14 +2,79 @@
 
 {% block content %}
 
-    {% include "partials/form.html" %}
+<!-- Tabs -->
+<ul class="nav nav-tabs" id="analysisTabs">
+    <li class="nav-item">
+        <a class="nav-link active" data-tab="tab-all-students" href="#">All Students</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-tab="tab-check-student" href="#">Check by Student</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-tab="tab-motivated-students" href="#">Motivated Students</a>
+    </li>
+</ul>
 
-    <!-- Students for All -->
-    <div id="student-table" class="mb-4"></div>
+<!-- Tab Contents -->
+<div class="mt-3">
 
-    <!-- Response for a single student by email -->
-    <div id="output" class="mb-4"></div>
+    <!-- Tab 1: All Students -->
+    <div id="tab-all-students" class="tab-pane active">
+        <div id="student-table" class="mb-4"></div>
+        <div id="student-analysis" class="mb-4"></div>
+    </div>
 
-    <!-- Response for the table -->
-    <div id="student-analysis"></div>
+    <!-- Tab 2: Check by Student -->
+    <div id="tab-check-student" class="tab-pane" style="display: none;">
+        {% include "partials/form.html" %}
+        <div id="output" class="mb-4"></div>
+    </div>
+
+    <!-- Tab 3: Motivated Students -->
+    <div id="tab-motivated-students" class="tab-pane" style="display: none;">
+        <form id="motivated-form" class="border p-3 rounded bg-light">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="motivated-type" class="form-label">Type</label>
+                    <select id="motivated-type" name="motivated_type" class="form-select form-select-sm">
+                        <option value="most_motivated">Most Motivated</option>
+                        <option value="less_motivated">Less Motivated</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="motivated-number" class="form-label">Number of Students</label>
+                    <input type="number" min="1" max="50" class="form-control form-control-sm" id="motivated-number" value="1">
+                </div>
+                <div class="col-md-4 d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Run</button>
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    <label for="week_from" class="form-label">Week From</label>
+                    <select id="motivated-week-from" id="week_from" name="week_from" class="form-select form-select-sm">
+                        {% for i in range(1, 53) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="week_to" class="form-label">Week To</label>
+                    <select id="motivated-week-to" id="week_to" name="week_to" class="form-select form-select-sm">
+                        {% for i in range(1, 53) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+        <div id="motivated-results" class="mt-3"></div>
+    </div>
+    <div id="preloader" style="display: none;" class="text-center my-3">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

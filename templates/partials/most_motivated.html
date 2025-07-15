@@ -1,23 +1,26 @@
-{% if student_email %}
-<h3>Most motivated student {{ student_email }}</h3>
-{% endif %}
-
 {% if metrics_table %}
-<h4>Summary Table of Averages:</h4>
-<table class="table table-sm table-striped align-middle">
-    <thead>
-        <tr>
-            <th class="col-6">Metric</th>
-            <th class="col-6">Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in metrics_table %}
-        <tr>
-            <td class="fw-semibold">{{ row.label }}</td>
-            <td>{{ row.value }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h4>Most motivated students:</h4>
+
+    {% for row in metrics_table %}
+        {% if row.email %}
+            <h6>Summary Table of Averages for user: <strong>{{ row.email }}</strong></h6>
+        {% endif %}
+
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th class="col-6">Metric</th>
+                    <th class="col-6">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in row.metrics %}
+                <tr>
+                    <td class="fw-semibold">{{ metric.label }}</td>
+                    <td>{{ metric.value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
 {% endif %}

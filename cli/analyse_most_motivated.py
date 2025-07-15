@@ -9,7 +9,7 @@ def main():
     args = parser.parse_args()
 
     agent = MostMotivatedStudentAgent()
-    result = agent.run_analysis(args.week_from, args.week_to)
+    result = agent.run_analysis(args.week_from, args.week_to, 3)
 
     print("\n" + "=" * 60)
     print("Most Motivated Student Analysis")
