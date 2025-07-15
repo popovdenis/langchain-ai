@@ -100,7 +100,6 @@ class MotivatedStudentAgent:
         question = self.build_metrics_prompt(metric_type, week_from, week_to, num_students)
 
         sql = sql_chain.invoke({"question": question})
-        logging.info(f"SQL #1:\n{sql}")
 
         sql = sql.strip()
         if sql.startswith("```sql"):
@@ -109,6 +108,9 @@ class MotivatedStudentAgent:
             sql = sql[:-3].strip()
 
         mycursor = self.mydb.cursor()
+
+        logging.info(f"SQL #1:\n{sql}")
+
         mycursor.execute(sql)
         rows = mycursor.fetchall()
         logging.info(f"SQL #1 result: {rows}")
