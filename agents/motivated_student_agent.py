@@ -66,7 +66,6 @@ class MotivatedStudentAgent:
        - avg_student_participation
        - avg_teacher_participation
        - avg_test_score
-    4. User ID must equal to 401
 
     Only return SQL. Use: WHERE week BETWEEN {week_from} AND {week_to}.
     """.strip()
