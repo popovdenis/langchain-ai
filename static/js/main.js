@@ -14,10 +14,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (selected === 'email') {
             emailInputBlock.style.display = 'block';
             studentTableBlock.innerHTML = '';
-            runAnalysis.style.display = 'block';
+            // runAnalysis.style.display = 'block';
         } else {
             emailInputBlock.style.display = 'none';
-            runAnalysis.style.display = 'none';
+            // runAnalysis.style.display = 'none';
             fetchStudents(1);
         }
     }
@@ -30,14 +30,10 @@ document.addEventListener("DOMContentLoaded", function () {
         analysisBlock.innerHTML = '';
         studentTableBlock.innerHTML = '<p>Loading students...</p>';
         const response = await fetch(`/students?page=${page}`);
-        const html = await response.text();
-        studentTableBlock.innerHTML = html;
+        studentTableBlock.innerHTML = await response.text();
     };
 
     window.showAnalysis = async function (email) {
-        // studentTableBlock.innerHTML = '';
-        analysisBlock.innerHTML = '<p>Loading analysis...</p>';
-
         const weekFrom = document.getElementById('week_from').value;
         const weekTo = document.getElementById('week_to').value;
         const action = document.getElementById('action').value;
@@ -68,6 +64,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
+
+        studentTableBlock.innerHTML = '';
+        analysisBlock.innerHTML = '';
+
+        const outputBlock = (action === 'analyse_student') ? studentTableBlock : analysisBlock;
         outputBlock.innerHTML = '<p>Loading analysis...</p>';
 
         const formData = new FormData(form);

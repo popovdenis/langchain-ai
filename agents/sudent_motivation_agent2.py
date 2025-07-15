@@ -12,8 +12,7 @@ from langchain_openai import ChatOpenAI
 from config.settings import Settings
 
 class StudentMotivationAgent2:
-    def __init__(self, debug: bool = True):
-        self.debug = debug
+    def __init__(self):
         self.llm = ChatOpenAI()
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())
         self.metric_weights = {
@@ -23,7 +22,6 @@ class StudentMotivationAgent2:
             "attendance": float(getattr(Settings, "WEIGHT_ATTENDANCE", 0.2)),
             "student_participation": float(getattr(Settings, "WEIGHT_STUDENT_PARTICIPATION", 0.1)),
             "teacher_participation": float(getattr(Settings, "WEIGHT_TEACHER_PARTICIPATION", 0.1)),
-            # "silence": float(getattr(Settings, "WEIGHT_SILENCE", 0.1)),
             "test_score": float(getattr(Settings, "WEIGHT_TEST_SCORE", 0.1)),
         }
 
@@ -48,8 +46,7 @@ class StudentMotivationAgent2:
             level=logging.DEBUG,
             format="%(asctime)s - %(levelname)s - %(message)s"
         )
-        if self.debug:
-            logging.getLogger().addHandler(logging.StreamHandler())
+        logging.getLogger().addHandler(logging.StreamHandler())
 
     def build_sql_prompt(self, email: str, week_from: int, week_to: int) -> str:
         return f"""

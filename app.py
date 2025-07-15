@@ -73,17 +73,23 @@ def student_analysis():
             # agent = StudentSQLAgent()
             agent = StudentMotivationAgent2()
             result = agent.run_analysis(email, week_from, week_to)
+            html = render_template(
+                "partials/analysis.html",
+                metrics_table=result,
+                student_email=email
+            )
         elif action == "most_motivated":
             agent = MostMotivatedStudentAgent()
             result = agent.run_analysis(week_from, week_to)
+
+            html = render_template(
+                "partials/most_motivated.html",
+                metrics_table=result['metrics'],
+                student_email=result['email']
+            )
         else:
             return jsonify({"error": "Unknown action"}), 400
 
-        html = render_template(
-            "partials/analysis.html",
-            metrics_table=result,
-            student_email=email
-        )
         return jsonify({"html": html})
 
     except Exception as e:

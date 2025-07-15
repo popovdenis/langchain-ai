@@ -5,10 +5,10 @@ def main():
     parser = argparse.ArgumentParser(description="Find the most motivated student in a week range")
     parser.add_argument("--week-from", type=int, required=True)
     parser.add_argument("--week-to", type=int, required=True)
-    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
-    agent = MostMotivatedStudentAgent(debug=args.debug)
+    agent = MostMotivatedStudentAgent()
     result = agent.run_analysis(args.week_from, args.week_to)
 
     print("\n" + "=" * 60)
