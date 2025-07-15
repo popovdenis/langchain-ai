@@ -6,6 +6,7 @@ import math
 import re
 import mysql.connector
 from config.settings import Settings
+from datetime import datetime
 
 app = Flask(__name__)
 application = app
@@ -46,7 +47,8 @@ def extract_metrics_table(output: str) -> list[dict]:
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    current_week = datetime.now().isocalendar()[1]
+    return render_template("index.html", current_week=current_week)
 
 @app.route("/students", methods=["GET"])
 def students_table():

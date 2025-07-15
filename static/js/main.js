@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.fetchStudents = async function (page = 1) {
         showLoader();
         analysisBlock.innerHTML = '';
-        studentTableBlock.innerHTML = '<p>Loading students...</p>';
+        studentTableBlock.innerHTML = '';
         const response = await fetch(`/students?page=${page}`);
         studentTableBlock.innerHTML = await response.text();
         hideLoader();
@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const weekFrom = document.getElementById('week_from').value;
         const weekTo = document.getElementById('week_to').value;
         const action = 'analyse_student';
+        analysisBlock.innerHTML = '';
 
         const payload = {
             action,
@@ -80,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
 
             showLoader();
-            outputBlock.innerHTML = '<p>Loading analysis...</p>';
+            outputBlock.innerHTML = '';
             const formData = new FormData(form);
             const payload = {
                 action: formData.get('action'),
@@ -114,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
 
             showLoader();
-            motivatedResults.innerHTML = '<p>Loading...</p>';
+            motivatedResults.innerHTML = '';
 
             const type = document.getElementById('motivated-type').value;
             const number = document.getElementById('motivated-number').value;
