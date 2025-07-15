@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from config.settings import Settings
 import mysql.connector
 
-class MostMotivatedStudentAgent:
+class MotivatedStudentAgent:
     def __init__(self):
         self.llm = ChatOpenAI(
             api_key=Settings.OPENAI_API_KEY,
@@ -52,11 +52,11 @@ class MostMotivatedStudentAgent:
     def get_schema(self, _=None):
         return self.db.get_table_info()
 
-    def build_metrics_prompt(self, week_from: int, week_to: int, num_students: int = 1) -> str:
+    def build_metrics_prompt(self, metric_type: str, week_from: int, week_to: int, num_students: int = 1) -> str:
         return f"""
     From the `student_metrics` table:
     1. For each user_id, calculate average of all metrics (excluding id, user_id, week).
-    2. Identify top {num_students} users with the highest overall average across all these metrics.
+    2. Identify top {num_students} users with the {metric_type} overall average across all these metrics.
     3. Return:
        - user_id
        - avg_homework_submitted
@@ -66,17 +66,18 @@ class MostMotivatedStudentAgent:
        - avg_student_participation
        - avg_teacher_participation
        - avg_test_score
+    4. User ID must equal to 401
 
     Only return SQL. Use: WHERE week BETWEEN {week_from} AND {week_to}.
     """.strip()
 
     def build_user_prompt(self, user_id: int) -> str:
         return f"""
-From the `users` table, return email for user with id = {user_id}.
-Return a single column: email.
-""".strip()
+    From the `users` table, return email for user with id = {user_id}.
+    Return a single column: email.
+    """.strip()
 
-    def run_analysis(self, week_from: int, week_to: int, num_students: int):
+    def run_analysis(self, metric_type: str, week_from: int, week_to: int, num_students: int):
         start_time = time.time()
         logging.info("Start: most motivated student analysis")
 
@@ -96,7 +97,7 @@ Return a single column: email.
             | self.llm
             | StrOutputParser()
         )
-        question = self.build_metrics_prompt(week_from, week_to, num_students)
+        question = self.build_metrics_prompt(metric_type, week_from, week_to, num_students)
 
         sql = sql_chain.invoke({"question": question})
         logging.info(f"SQL #1:\n{sql}")

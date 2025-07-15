@@ -121,11 +121,13 @@ document.addEventListener("DOMContentLoaded", function () {
             const number = document.getElementById('motivated-number').value;
             const weekFrom = document.getElementById('motivated-week-from').value;
             const weekTo = document.getElementById('motivated-week-to').value;
+            const studentEmail = document.getElementById('student-email').value;
 
             const payload = {
                 action: type,
                 week_from: weekFrom,
                 week_to: weekTo,
+                email: studentEmail,
                 num_students: number
             };
 

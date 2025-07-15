@@ -22,7 +22,7 @@
                 <div class="col-md-3">
                     <label for="week_from" class="form-label">Week From</label>
                     <select id="week_from" name="week_from" class="form-select form-select-sm">
-                        {% for i in range(1, 53) %}
+                        {% for i in range(1, 52) %}
                             <option value="{{ i }}">{{ i }}</option>
                         {% endfor %}
                     </select>
@@ -32,8 +32,8 @@
                 <div class="col-md-3">
                     <label for="week_to" class="form-label">Week To</label>
                     <select id="week_to" name="week_to" class="form-select form-select-sm">
-                        {% for i in range(1, current_week) %}
-                            <option value="{{ i }}" {% if i == current_week %}selected{% endif %}>{{ i }}</option>
+                        {% for i in range(1, 52) %}
+                            <option value="{{ i }}">{{ i }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -54,16 +54,7 @@
                         <option value="less_motivated">Less Motivated</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label for="motivated-number" class="form-label">Number of Students</label>
-                    <input type="number" min="1" max="50" class="form-control form-control-sm" id="motivated-number" value="1">
-                </div>
-                <div class="col-md-4 d-grid">
-                    <button type="submit" class="btn btn-primary btn-sm mt-2">Run</button>
-                </div>
-            </div>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3">
+                <div class="col-md-1">
                     <label for="motivated-week-from" class="form-label">Week From</label>
                     <select id="motivated-week-from" name="week_from" class="form-select form-select-sm">
                         {% for i in range(1, 53) %}
@@ -71,13 +62,26 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-1">
                     <label for="motivated-week-to" class="form-label">Week To</label>
                     <select id="motivated-week-to" name="week_to" class="form-select form-select-sm">
-                        {% for i in range(1, current_week) %}
-                            <option value="{{ i }}" {% if i == current_week %}selected{% endif %}>{{ i }}</option>
+                        {% for i in range(1, 53) %}
+                            <option value="{{ i }}">{{ i }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="motivated-number" class="form-label">Number of Students</label>
+                    <input type="number" min="1" max="50" class="form-control form-control-sm" id="motivated-number" value="1">
+                </div>
+                <div class="col-md-2">
+                    <label for="student-email" class="form-label">Student Email</label>
+                    <input type="email" class="form-control form-control-sm" id="student-email" name="email">
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4 d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Run</button>
                 </div>
             </div>
         </form>
