@@ -76,87 +76,98 @@ class MotivatedStudentAgent:
     Return a single column: email.
     """.strip()
 
+    def build_user_prompt_bulk(self, user_ids: list[int]) -> str:
+        ids_str = ", ".join(map(str, user_ids))
+        return f"""
+        From the `users` table, return id and email for users with id in ({ids_str}).
+        Return two columns: id, email.
+        """.strip()
+
     def run_analysis(self, metric_type: str, week_from: int, week_to: int, num_students: int):
         start_time = time.time()
         logging.info("Start: most motivated student analysis")
 
-        # 1. Step: find user_id with best average metrics
+        # Step 1: Find user_id(s) with best average metrics
         prompt = ChatPromptTemplate.from_template("""
             Use schema to answer question. Return valid SQL only.
             Schema:
             {schema}
-            
+
             Question:
             {question}
             SQL Query:
         """)
         sql_chain = (
-            RunnablePassthrough.assign(schema=self.get_schema)
-            | prompt
-            | self.llm
-            | StrOutputParser()
+                RunnablePassthrough.assign(schema=self.get_schema)
+                | prompt
+                | self.llm
+                | StrOutputParser()
         )
+
         question = self.build_metrics_prompt(metric_type, week_from, week_to, num_students)
+        sql = sql_chain.invoke({"question": question}).strip()
 
-        sql = sql_chain.invoke({"question": question})
-
-        sql = sql.strip()
         if sql.startswith("```sql"):
             sql = sql.replace("```sql", "").strip()
         if sql.endswith("```"):
             sql = sql[:-3].strip()
 
         mycursor = self.mydb.cursor()
-
         logging.info(f"SQL #1:\n{sql}")
-
         mycursor.execute(sql)
         rows = mycursor.fetchall()
         logging.info(f"SQL #1 result: {rows}")
 
+        if not rows:
+            logging.warning("No rows returned from SQL #1")
+            return []
+
+        # Step 2: Collect user_ids and fetch emails in one request
+        user_ids = [row[0] for row in rows]
+        question2 = self.build_user_prompt_bulk(user_ids)
+
+        sql_chain2 = (
+                RunnablePassthrough.assign(schema=self.get_schema)
+                | prompt
+                | self.llm.bind(stop="\nSQL Result:")
+                | StrOutputParser()
+        )
+
+        sql2 = sql_chain2.invoke({"question": question2}).strip()
+        logging.info(f"SQL #2:\n{sql2}")
+
+        if sql2.startswith("```sql"):
+            sql2 = sql2.replace("```sql", "").strip()
+        if sql2.endswith("```"):
+            sql2 = sql2[:-3].strip()
+
+        result2 = self.db.run(sql2)
+        logging.info(f"SQL #2 result: {result2}")
+
+        try:
+            id_to_email = {row[0]: row[1] for row in ast.literal_eval(result2)}
+        except Exception as e:
+            logging.error(f"Failed to parse email list: {e}")
+            raise ValueError("Could not extract emails from result")
+
+        # Step 3: Analyse each user individually
         summary = []
 
-        # 2. Parse the result
         for row in rows:
             try:
                 user_id = row[0]
-                metric_values = row[:0] + row[0 + 1:]
+                metric_values = row[1:]  # all columns except user_id
+                email = id_to_email.get(user_id, f"user-{user_id}@unknown.local")
             except Exception as e:
-                logging.error(f"Parse error in result: {e}")
-                raise ValueError("Invalid result from SQL #1")
+                logging.error(f"Parse error in row: {e}")
+                continue
 
-            # 2. Step: get email by user_id
-            question2 = self.build_user_prompt(user_id)
-            sql_chain2 = (
-                    RunnablePassthrough.assign(schema=self.get_schema)
-                    | prompt
-                    | self.llm.bind(stop="\nSQL Result:")
-                    | StrOutputParser()
-            )
-            sql2 = sql_chain2.invoke({"question": question2})
-            logging.info(f"SQL #2:\n{sql2}")
-
-            sql2 = sql2.strip()
-            if sql2.startswith("```sql"):
-                sql2 = sql2.replace("```sql", "").strip()
-            if sql2.endswith("```"):
-                sql2 = sql2[:-3].strip()
-
-            result2 = self.db.run(sql2)
-            logging.info(f"SQL #2 result: {result2}")
             try:
-                email = ast.literal_eval(result2)[0][0]
-            except Exception as e:
-                logging.error(f"Parse error in result2: {e}")
-                raise ValueError("Could not extract email")
-
-            # Step 2: Analyse
-            try:
-                logging.info("Start analysing metrics")
+                logging.info(f"Start analysing metrics for user_id={user_id}")
                 metrics_res = self._analyse_metrics(metric_values)
             except Exception as e:
-                logging.error(f"Failed to analyse metrics: {e}")
-                raise ValueError(f"Failed to analyse metrics: {e}")
+                logging.error(f"Failed to analyse metrics for user_id={user_id}: {e}")
+                continue
 
             summary.append({"email": email, "metrics": metrics_res})
 
