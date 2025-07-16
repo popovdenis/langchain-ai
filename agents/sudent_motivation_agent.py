@@ -11,7 +11,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from config.settings import Settings
 
-class StudentMotivationAgent2:
+class StudentMotivationAgent:
     def __init__(self):
         self.llm = ChatOpenAI()
         self.db = SQLDatabase.from_uri(Settings.mysql_uri())

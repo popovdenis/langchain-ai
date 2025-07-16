@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from agents.motivated_student_agent import MotivatedStudentAgent
-from agents.sudent_motivation_agent2 import StudentMotivationAgent2
+from agents.sudent_motivation_agent import StudentMotivationAgent
 import math
 import re
 import mysql.connector
@@ -70,33 +70,17 @@ def student_analysis():
         num_students = int(data.get("num_students", 1))
 
         if action == "analyse_student":
-            agent = StudentMotivationAgent2()
+            agent = StudentMotivationAgent()
             result = agent.run_analysis(email, week_from, week_to)
-            html = render_template(
-                "partials/analysis.html",
-                metrics_table=result,
-                student_email=email
-            )
-        elif action == "most_motivated":
+            html = render_template("partials/analysis.html", metrics_table=result, student_email=email)
+        elif action == "most_motivated" or action == "less_motivated":
             agent = MotivatedStudentAgent()
-            result = agent.run_analysis('highest', week_from, week_to, num_students)
-
-            html = render_template(
-                "partials/motivated.html",
-                metrics_table=result
-            )
-        elif action == "less_motivated":
-            agent = MotivatedStudentAgent()
-            result = agent.run_analysis('lowest', week_from, week_to, num_students)
-
-            html = render_template(
-                "partials/motivated.html",
-                metrics_table=result
-            )
+            approach = 'highest' if action == "most_motivated" else 'lowest'
+            result = agent.run_analysis(approach, week_from, week_to, num_students)
+            html = render_template("partials/motivated.html", metrics_table=result)
         else:
             return jsonify({"error": "Unknown action"}), 400
 
         return jsonify({"html": html})
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
