@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showLoader();
         analysisBlock.innerHTML = '';
         studentTableBlock.innerHTML = '';
-        const response = await fetch(`/students?page=${page}`);
+        const response = await fetch(`/mvp/students?page=${page}`);
         studentTableBlock.innerHTML = await response.text();
         hideLoader();
     };
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
             num_students: 1
         };
 
-        const response = await fetch("/analysis", {
+        const response = await fetch("/mvp/analysis", {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 num_students: 1
             };
 
-            const response = await fetch("/analysis", {
+            const response = await fetch("/mvp/analysis", {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 num_students: number
             };
 
-            const response = await fetch("/analysis", {
+            const response = await fetch("/mvp/analysis", {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
