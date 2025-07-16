@@ -6,9 +6,11 @@ import re
 import mysql.connector
 from config.settings import Settings
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 application = app
+application.config['API_BASE_URL'] = os.getenv('API_BASE_URL', '/')
 
 def get_paginated_students(page: int, per_page: int = 10):
     offset = (page - 1) * per_page

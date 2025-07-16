@@ -15,6 +15,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (preloader) preloader.style.display = 'none';
     }
 
+    async function sendRequest(path, data, method = 'POST') {
+        const response = await fetch(`${API_BASE_URL}/${path}`, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        return await response.json();
+    }
+
     // Tab switching
     document.querySelectorAll('#analysisTabs .nav-link').forEach(link => {
         link.addEventListener('click', function (e) {
@@ -37,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showLoader();
         analysisBlock.innerHTML = '';
         studentTableBlock.innerHTML = '';
-        const response = await fetch(`/mvp/students?page=${page}`);
+        const response = await fetch(`${API_BASE_URL}/students?page=${page}`);
         studentTableBlock.innerHTML = await response.text();
         hideLoader();
     };
@@ -58,15 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
             num_students: 1
         };
 
-        const response = await fetch("/mvp/analysis", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
+        const data = await sendRequest('analysis', payload);
         if (data.html) {
             analysisBlock.innerHTML = data.html;
         } else {
@@ -91,15 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 num_students: 1
             };
 
-            const response = await fetch("/mvp/analysis", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
+            const data = await sendRequest('analysis', payload);
             if (data.html) {
                 outputBlock.innerHTML = data.html;
             } else {
@@ -131,15 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 num_students: number
             };
 
-            const response = await fetch("/mvp/analysis", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
+            const data = await sendRequest('analysis', payload);
             if (data.html) {
                 motivatedResults.innerHTML = data.html;
             } else {

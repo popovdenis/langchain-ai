@@ -9,9 +9,8 @@
   <div class="container py-4">
     {% block content %}{% endblock %}
   </div>
-
+  <script> const API_BASE_URL = "{{ config['API_BASE_URL'] }}"; </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
