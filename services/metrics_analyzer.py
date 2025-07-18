@@ -24,9 +24,9 @@ class MetricsAnalyser:
 
         total_score = round(subtotal * 100, 2)
         motivation_zone = (
-            "Red" if total_score <= 45 else
-            "Yellow" if total_score <= 75 else
-            "Green"
+            "High Risk" if total_score <= 45 else
+            "Moderate Risk" if total_score <= 75 else
+            "Low Risk"
         )
 
         try:
