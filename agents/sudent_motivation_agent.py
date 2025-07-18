@@ -148,9 +148,9 @@ SQL Query:
 
         total_score = round(subtotal * 100, 2)
         motivation_zone = (
-            "Red" if total_score <= 45 else
-            "Yellow" if total_score <= 75 else
-            "Green"
+            "High Risk" if total_score <= 45 else
+            "Moderate Risk" if total_score <= 75 else
+            "Low Risk"
         )
 
         try:
@@ -169,8 +169,8 @@ Be optimistic, specific, and helpful. Only return the message text.
             motivation_message = "Motivational message could not be generated."
 
         summary.append({"label": "Subtotal", "value": round(subtotal, 4)})
-        summary.append({"label": "Total Score", "value": f"{total_score}%"})
-        summary.append({"label": "Motivation Zone", "value": motivation_zone})
-        summary.append({"label": "Motivational Message", "value": motivation_message})
+        summary.append({"label": "Retention Probability", "value": f"{total_score}%"})
+        summary.append({"label": "Dropout Risk Zone", "value": motivation_zone})
+        summary.append({"label": "Message to Student", "value": motivation_message})
 
         return summary
