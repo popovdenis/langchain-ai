@@ -156,8 +156,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             autocompleteTimeout = setTimeout(async () => {
-                showLoader();
-
                 try {
                     const res = await fetch(`${API_BASE_URL}/search-students?q=${encodeURIComponent(query)}`);
                     const emails = await res.json();
@@ -174,16 +172,13 @@ document.addEventListener("DOMContentLoaded", function () {
                             emailInput.value = email;
                             resultBox.innerHTML = '';
                             showAnalysis(email);
-                            emailInput.value = '';
-                            setTimeout(() => preventSearch = false, 1500);
+                            preventSearch = false
                         };
                         resultBox.appendChild(item);
                     });
                 } catch (error) {
                     console.error("Autocomplete fetch error:", error);
                     resultBox.innerHTML = '<div class="text-danger px-2">Failed to fetch results</div>';
-                } finally {
-                    hideLoader();
                 }
             }, 500);
         });
