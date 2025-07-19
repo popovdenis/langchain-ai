@@ -1,37 +1,10 @@
-{% if student_email %}
-<h3>Analysis for {{ student_email }}</h3>
-{% endif %}
-
 {% if analysis and analysis.metrics %}
-<h4>Summary Table of Averages:</h4>
-<table class="table table-sm table-striped align-middle">
-    <thead>
-        <tr>
-            <th class="col-6">Metric</th>
-            <th class="col-6">Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in analysis.metrics %}
-        <tr>
-            <td class="fw-semibold">{{ row.label }}</td>
-            <td>{{ row.value }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
+    {% set email = student_email %}
+    {% set metrics = analysis.metrics %}
+    {% set metric_zone = analysis.metric_zone %}
+    {% set subtotal = analysis.subtotal %}
+    {% set total = analysis.total %}
+    {% set motivation_message = analysis.motivation_message %}
 
-<!-- Summary Block -->
-<div class="mt-4 p-3 border rounded bg-light">
-    <p><strong>Dropout Risk Zone:</strong> {{ analysis.metric_zone }}</p>
-    <p><strong>Subtotal:</strong> {{ analysis.subtotal }}</p>
-    <p><strong>Retention Probability:</strong> {{ analysis.total }}</p>
-</div>
-
-<!-- Motivational Message -->
-{% if analysis.motivation_message %}
-<div class="mt-3 p-3 border rounded bg-success bg-opacity-10">
-    <p class="fst-italic mb-0">{{ analysis.motivation_message }}</p>
-</div>
+    {% include 'partials/student_summary.html' %}
 {% endif %}
