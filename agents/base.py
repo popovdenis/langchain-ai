@@ -29,6 +29,11 @@ class BaseAgent:
     def _get_schema(self, _: dict = None):
         return self.db.get_table_info()
 
+    def _build_and_run(self, question: str, stop: str = None):
+        sql = self._run_llm_sql_chain(question, stop)
+
+        return self.db.run(sql)
+
     def _run_llm_sql_chain(self, question: str, stop: str = None) -> str:
         prompt = ChatPromptTemplate.from_template("""
             Use schema to answer question. Return valid SQL only.

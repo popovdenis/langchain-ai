@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-from agents.motivated_student_agent import MotivatedStudentAgent
-from agents.sudent_motivation_agent import StudentMotivationAgent
+from agents.dropout_risk_agent import DropoutRiskAgent
+from agents.sudent_analysis_agent import StudentAnalysisAgent
 import math
 import re
 import mysql.connector
@@ -72,14 +72,21 @@ def student_analysis():
         num_students = int(data.get("num_students", 1))
 
         if action == "analyse_student":
-            agent = StudentMotivationAgent()
+            agent = StudentAnalysisAgent()
             result = agent.run_analysis(email, week_from, week_to)
-            html = render_template("partials/analysis.html", metrics_table=result, student_email=email)
+            html = render_template(
+                "partials/analysis.html",
+                analysis=result,
+                student_email=email
+            )
         elif action == "most_motivated" or action == "less_motivated":
-            agent = MotivatedStudentAgent()
+            agent = DropoutRiskAgent()
             approach = 'highest' if action == "most_motivated" else 'lowest'
             result = agent.run_analysis(approach, week_from, week_to, num_students)
-            html = render_template("partials/motivated.html", metrics_table=result)
+            html = render_template(
+                "partials/motivated.html",
+                analysis=result
+            )
         else:
             return jsonify({"error": "Unknown action"}), 400
 

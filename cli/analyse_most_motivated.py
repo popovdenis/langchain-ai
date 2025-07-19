@@ -1,5 +1,5 @@
 import argparse
-from agents.motivated_student_agent import MotivatedStudentAgent
+from agents.dropout_risk_agent import DropoutRiskAgent
 
 def main():
     parser = argparse.ArgumentParser(description="Find the most motivated student in a week range")
@@ -8,7 +8,7 @@ def main():
     parser.add_argument("--limit", type=int)
     args = parser.parse_args()
 
-    agent = MotivatedStudentAgent()
+    agent = DropoutRiskAgent()
     result = agent.run_analysis('highest', args.week_from, args.week_to, 3)
 
     print("\n" + "=" * 60)

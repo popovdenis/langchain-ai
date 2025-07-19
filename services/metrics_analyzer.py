@@ -7,7 +7,7 @@ class MetricsAnalyser:
         self.metric_weights = metric_weights
         self.llm = llm
 
-    def analyse(self, metrics: list[float]) -> list[dict]:
+    def analyse(self, metrics: list[float]):
         metric_order = list(self.metric_weights.keys())
         summary = []
         subtotal = 0.0
@@ -40,9 +40,10 @@ class MetricsAnalyser:
             logging.error(f"Motivational message generation failed: {e}")
             motivation_message = "Motivational message could not be generated."
 
-        summary.append({"label": "Subtotal", "value": round(subtotal, 4)})
-        summary.append({"label": "Retention Probability", "value": f"{total_score}%"})
-        summary.append({"label": "Dropout Risk Zone", "value": motivation_zone})
-        summary.append({"label": "Message to Student", "value": motivation_message})
-
-        return summary
+        return {
+            "metrics": summary,
+            "metric_zone": motivation_zone,
+            "subtotal": round(subtotal, 4),
+            "total": f"{total_score}%",
+            "motivation_message": motivation_message,
+        }

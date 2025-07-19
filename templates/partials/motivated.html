@@ -1,26 +1,42 @@
-{% if metrics_table %}
+{% if analysis %}
 <h4>Most motivated students:</h4>
 
-    {% for row in metrics_table %}
+    {% for row in analysis %}
         {% if row.email %}
             <h6>Summary Table of Averages for user: <strong>{{ row.email }}</strong></h6>
         {% endif %}
 
-        <table class="table table-sm table-striped align-middle">
-            <thead>
-                <tr>
-                    <th class="col-6">Metric</th>
-                    <th class="col-6">Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for metric in row.metrics %}
-                <tr>
-                    <td class="fw-semibold">{{ metric.label }}</td>
-                    <td>{{ metric.value }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% if row.student_analysis and row.student_analysis.metrics %}
+            <table class="table table-sm table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th class="col-6">Metric</th>
+                        <th class="col-6">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for metric in row.student_analysis.metrics %}
+                    <tr>
+                        <td class="fw-semibold">{{ metric.label }}</td>
+                        <td>{{ metric.value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <!-- Summary Block -->
+        <div class="mt-4 p-3 border rounded bg-light">
+            <p><strong>Dropout Risk Zone:</strong> {{ row.student_analysis.metric_zone }}</p>
+            <p><strong>Subtotal:</strong> {{ row.student_analysis.subtotal }}</p>
+            <p><strong>Retention Probability:</strong> {{ row.student_analysis.total }}</p>
+        </div>
+
+        <!-- Motivational Message -->
+        {% if row.student_analysis.motivation_message %}
+        <div class="mt-3 p-3 border rounded bg-success bg-opacity-10">
+            <p class="fst-italic mb-0">{{ row.student_analysis.motivation_message }}</p>
+        </div>
+        {% endif %}
     {% endfor %}
 {% endif %}

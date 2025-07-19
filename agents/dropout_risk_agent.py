@@ -3,7 +3,7 @@ import time
 
 from agents.base import BaseAgent
 
-class MotivatedStudentAgent(BaseAgent):
+class DropoutRiskAgent(BaseAgent):
     def _get_user_ids(self, metric_type: str, week_from: int, week_to: int, num_students: int = 1):
         # Build SQL query using LLM for top motivated students
         self.logger.info("Build SQL query using LLM for top motivated students")
@@ -13,7 +13,7 @@ class MotivatedStudentAgent(BaseAgent):
         self.logger.info(f"SQL for building metrics: {sql}")
         self.mycursor.execute(sql)
         rows = self.mycursor.fetchall()
-        self.logger.info(f"SQL #1 result: {rows}")
+        self.logger.info(f"SQL result: {rows}")
 
         if not rows:
             self.logger.warning("No rows returned from SQL #1")
@@ -22,15 +22,13 @@ class MotivatedStudentAgent(BaseAgent):
         return rows
 
     def _get_users_by_ids(self, user_ids):
-        email_query = self._build_user_prompt_bulk(user_ids)
-        sql = self._run_llm_sql_chain(email_query, stop="\nSQL Result:")
-        result = self.db.run(sql)
+        result = self._build_and_run(self._build_user_prompt_bulk(user_ids), stop="\nSQL Result:")
 
         return {row[0]: row[1] for row in ast.literal_eval(result)}
 
     def run_analysis(self, metric_type: str, week_from: int, week_to: int, num_students: int):
         start_time = time.time()
-        self.logger.info("Start: most motivated student analysis")
+        self.logger.info("Start: motivated student analysis")
 
         try:
             # Get user emails in bulk
@@ -53,12 +51,11 @@ class MotivatedStudentAgent(BaseAgent):
 
             try:
                 self.logger.info(f"Start analysing metrics for user_id={user_id}")
-                metrics_res = self._analyse_metrics(metric_values)
+                analysis = self._analyse_metrics(metric_values)
+                summary.append({"email": email, "student_analysis": analysis})
             except Exception as e:
                 self.logger.error(f"Failed to analyse metrics for user_id={user_id}: {e}")
                 continue
-
-            summary.append({"email": email, "metrics": metrics_res})
 
         elapsed_time = time.time() - start_time
         self.logger.info(f"Full analysis completed in {elapsed_time:.2f} seconds")
