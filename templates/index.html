@@ -37,6 +37,18 @@
                         {% endfor %}
                     </select>
                 </div>
+
+                <!-- Student Email -->
+                <div class="col-md-4">
+                    <label for="student-email" class="form-label">Find Student by Email</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control form-control-sm" id="student-email" autocomplete="false" placeholder="Type to search...">
+                        <div id="autocomplete-results" class="list-group position-absolute z-3 w-100" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" id="clear-student" class="btn btn-outline-secondary btn-sm">Clear</button>
+                </div>
             </div>
         </div>
         <div id="student-table" class="mb-4"></div>
@@ -73,10 +85,6 @@
                 <div class="col-md-2">
                     <label for="motivated-number" class="form-label">Number of Students</label>
                     <input type="number" min="1" max="50" class="form-control form-control-sm" id="motivated-number" value="1">
-                </div>
-                <div class="col-md-2">
-                    <label for="student-email" class="form-label">Student Email</label>
-                    <input type="email" class="form-control form-control-sm" id="student-email" name="email">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary btn-sm mt-2">Run</button>

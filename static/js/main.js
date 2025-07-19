@@ -137,4 +137,64 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Auto-load default tab
     document.querySelector('#analysisTabs .nav-link.active').click();
+
+    // Autocomplete logic
+    let autocompleteTimeout = null;
+    let preventSearch = false;
+    const emailInput = document.getElementById('student-email');
+    const resultBox = document.getElementById('autocomplete-results');
+
+    if (emailInput) {
+        emailInput.addEventListener('input', function () {
+            if (preventSearch) return;
+
+            clearTimeout(autocompleteTimeout);
+            const query = this.value.trim();
+            if (query.length < 2) {
+                resultBox.innerHTML = '';
+                return;
+            }
+
+            autocompleteTimeout = setTimeout(async () => {
+                showLoader();
+
+                try {
+                    const res = await fetch(`${API_BASE_URL}/search-students?q=${encodeURIComponent(query)}`);
+                    const emails = await res.json();
+
+                    resultBox.innerHTML = '';
+                    emails.forEach(email => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = email;
+                        item.onclick = (e) => {
+                            e.preventDefault();
+                            preventSearch = true;
+                            emailInput.value = email;
+                            resultBox.innerHTML = '';
+                            showAnalysis(email);
+                            emailInput.value = '';
+                            setTimeout(() => preventSearch = false, 1500);
+                        };
+                        resultBox.appendChild(item);
+                    });
+                } catch (error) {
+                    console.error("Autocomplete fetch error:", error);
+                    resultBox.innerHTML = '<div class="text-danger px-2">Failed to fetch results</div>';
+                } finally {
+                    hideLoader();
+                }
+            }, 500);
+        });
+    }
+
+    const clearButton = document.getElementById('clear-student');
+    if (clearButton && emailInput) {
+        clearButton.addEventListener('click', () => {
+            emailInput.value = '';
+            resultBox.innerHTML = '';
+            analysisBlock.innerHTML = '';
+        });
+    }
 });

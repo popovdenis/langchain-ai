@@ -93,3 +93,17 @@ def student_analysis():
         return jsonify({"html": html})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/search-students", methods=["GET"])
+def search_students():
+    query = request.args.get("q", "").strip()
+    if not query or len(query) < 2:
+        return jsonify([])
+
+    conn = mysql.connector.connect(**Settings.mysql_dsn())
+    cursor = conn.cursor()
+    sql = "SELECT email FROM users WHERE email LIKE %s LIMIT 10"
+    cursor.execute(sql, (f"%{query}%",))
+    results = [row[0] for row in cursor.fetchall()]
+
+    return jsonify(results)
