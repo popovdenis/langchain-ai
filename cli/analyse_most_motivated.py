@@ -9,7 +9,7 @@ def main():
     args = parser.parse_args()
 
     agent = DropoutRiskAgent()
-    result = agent.run_analysis('highest', args.week_from, args.week_to, 3)
+    result = agent.run_analysis('highest', args.week_from, args.week_to, 5)
 
     print("\n" + "=" * 60)
     print("Most Motivated Student Analysis")

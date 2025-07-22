@@ -57,12 +57,27 @@ class DropoutRiskAgent(BaseAgent):
                 self.logger.error(f"Failed to analyse metrics for user_id={user_id}: {e}")
                 continue
 
+        summary = self.sort_by_metric(summary, metric_type)
+
         elapsed_time = time.time() - start_time
         self.logger.info(f"Full analysis completed in {elapsed_time:.2f} seconds")
 
         return summary
 
+    def sort_by_metric(self, summary: list[dict], metric_type: str) -> list[dict]:
+        reverse = True if metric_type == 'highest' else False
+
+        def extract_subtotal(item):
+            try:
+                return item['student_analysis']['subtotal']
+            except (IndexError, KeyError, TypeError):
+                return float('-inf') if reverse else float('inf')
+
+        return sorted(summary, key=extract_subtotal, reverse=reverse)
+
     def _build_metrics_prompt(self, metric_type: str, week_from: int, week_to: int, num_students: int = 1) -> str:
+        order = "DESC" if metric_type == "highest" else "ASC"
+
         return f"""
         From the `student_metrics` table:
         1. For each user_id, calculate average of all metrics (excluding id, user_id, week).
@@ -76,7 +91,9 @@ class DropoutRiskAgent(BaseAgent):
            - avg_student_participation
            - avg_teacher_participation
            - avg_test_score
-        Only return SQL. Use: WHERE week BETWEEN {week_from} AND {week_to}.
+        Use: WHERE week BETWEEN {week_from} AND {week_to}.
+        Sort users by overall average {order}, and limit to {num_students}.
+        Only return SQL.
         """.strip()
 
     def _build_user_prompt_bulk(self, user_ids: list[int]) -> str:

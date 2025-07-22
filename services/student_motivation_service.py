@@ -4,7 +4,6 @@ import psycopg2
 import statistics
 from config.settings import Settings
 
-
 class StudentMotivationService:
     def __init__(self):
         self.conn = psycopg2.connect(Settings.mysql_dsn())
