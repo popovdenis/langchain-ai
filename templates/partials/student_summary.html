@@ -22,9 +22,8 @@
 {% endif %}
 
 <div class="mt-4 p-3 border rounded bg-light">
-    <p><strong>Dropout Risk Zone:</strong> {{ metric_zone }}</p>
-    <p><strong>Subtotal:</strong> {{ subtotal }}</p>
     <p><strong>Retention Probability:</strong> {{ total }}</p>
+    <p><strong>Dropout Risk Zone:</strong> {{ metric_zone }}</p>
 </div>
 
 {% if motivation_message %}
