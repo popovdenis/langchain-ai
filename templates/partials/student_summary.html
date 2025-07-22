@@ -1,33 +1,35 @@
-{% if email %}
-    <h6>Summary Table of Averages for user: <strong>{{ email }}</strong></h6>
-{% endif %}
+<div class="mt-4 mb-4">
+    {% if email %}
+        <h6>Summary Table of Averages for user: <strong>{{ email }}</strong></h6>
+    {% endif %}
 
-{% if metrics %}
-    <table class="table table-sm table-striped align-middle">
-        <thead>
-            <tr>
-                <th class="col-6">Metric</th>
-                <th class="col-6">Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for metric in metrics %}
-            <tr>
-                <td class="fw-semibold">{{ metric.label }}</td>
-                <td>{{ metric.value }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% endif %}
+    {% if metrics %}
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th class="col-6">Metric</th>
+                    <th class="col-6">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in metrics %}
+                <tr>
+                    <td class="fw-semibold">{{ metric.label }}</td>
+                    <td>{{ metric.value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 
-<div class="mt-4 p-3 border rounded bg-light">
-    <p><strong>Retention Probability:</strong> {{ total }}</p>
-    <p><strong>Dropout Risk Zone:</strong> {{ metric_zone }}</p>
+    <div class="mt-4 p-3 border rounded bg-light">
+        <p><strong>Retention Probability:</strong> {{ total }}</p>
+        <p><strong>Dropout Risk Zone:</strong> {{ metric_zone }}</p>
+    </div>
+
+    {% if motivation_message %}
+    <div class="mt-3 p-3 border rounded bg-success bg-opacity-10">
+        <p class="fst-italic mb-0">{{ motivation_message }}</p>
+    </div>
+    {% endif %}
 </div>
-
-{% if motivation_message %}
-<div class="mt-3 p-3 border rounded bg-success bg-opacity-10">
-    <p class="fst-italic mb-0">{{ motivation_message }}</p>
-</div>
-{% endif %}
